@@ -20,6 +20,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function nightsBetween(checkIn: string, checkOut: string): number {
+  const start = new Date(checkIn).getTime();
+  const end = new Date(checkOut).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
+  return Math.max(0, Math.round((end - start) / MS_PER_DAY));
+}
 
 function MiniCalendar({ bookedDates }: { bookedDates: string[] }) {
   const today = new Date();
@@ -227,9 +235,15 @@ export default function BookingsScreen() {
                     <Ionicons name="calendar-outline" size={12} color={COLORS.textSecondary} />
                     <Text style={styles.dateText}>{item.checkIn} → {item.checkOut}</Text>
                   </View>
+                  {nightsBetween(item.checkIn, item.checkOut) > 0 && (
+                    <View style={styles.nightsPill}>
+                      <Text style={styles.nightsPillText}>
+                        {nightsBetween(item.checkIn, item.checkOut)} {nightsBetween(item.checkIn, item.checkOut) === 1 ? 'night' : 'nights'}
+                      </Text>
+                    </View>
+                  )}
                   <Text style={styles.priceText}>
                     {item.currency} {item.totalAmount.toLocaleString()}
-                    <Text style={styles.priceNight}> {item.status === 'PENDING' || item.status === 'CONFIRMED' ? '' : ''}</Text>
                   </Text>
                 </View>
                 <View style={styles.rightCol}>
@@ -337,6 +351,15 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
   dateText: { fontSize: 12, color: COLORS.textSecondary },
+  nightsPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginBottom: 4,
+  },
+  nightsPillText: { fontSize: 10, fontWeight: '700', color: COLORS.primary },
   priceText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
   priceNight: { fontSize: 11, color: COLORS.textSecondary },
   rightCol: { padding: 10, justifyContent: 'space-between', alignItems: 'flex-end' },

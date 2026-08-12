@@ -22,6 +22,8 @@ export type Property = {
   rating?: number;
   reviewCount?: number;
   typeName?: string;
+  starRating?: string;
+  facilities?: string[];
   rooms?: RoomOption[];
 };
 
@@ -62,6 +64,24 @@ export function formatLocation(p: { city?: string; country?: string }): string {
   return [p.city, p.country].filter(Boolean).join(', ');
 }
 
+export type PropertyBadge = { label: string; tone: 'accent' | 'primary' | 'success' };
+
+/**
+ * Derives a single display badge from data we already have (rating,
+ * starRating) rather than an unverified `badges`/`isPremium` field — keeps
+ * this honest about what the API actually confirmed returning.
+ */
+export function getPropertyBadge(
+  p: Property,
+  opts?: { featured?: boolean; rank?: number },
+): PropertyBadge | null {
+  if (opts?.featured && opts.rank === 0) return { label: 'Staff Pick', tone: 'accent' };
+  if (p.starRating === 'FIVE_STAR') return { label: 'Luxury', tone: 'primary' };
+  if (p.rating != null && p.rating >= 4.7) return { label: 'Top Rated', tone: 'success' };
+  if (opts?.featured) return { label: 'Featured', tone: 'accent' };
+  return null;
+}
+
 /**
  * Normalizes the various raw shapes returned by different property endpoints
  * (search, premium, public detail, host list) into one client-safe shape.
@@ -87,6 +107,10 @@ export function normalizeProperty(raw: any): Property {
     rating: raw.rating ?? undefined,
     reviewCount: raw.reviewCount ?? undefined,
     typeName: raw.type?.name ?? undefined,
+    starRating: raw.starRating ?? undefined,
+    facilities: Array.isArray(raw.facilities)
+      ? raw.facilities.map((f: any) => f.facility?.name).filter(Boolean)
+      : undefined,
     rooms: rooms.length && rooms[0]?.id != null
       ? rooms.map((r: any) => ({
           id: String(r.id),

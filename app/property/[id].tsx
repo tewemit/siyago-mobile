@@ -18,6 +18,25 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native';
 
+type Tab = 'overview' | 'amenities' | 'reviews';
+
+function facilityIcon(name: string): keyof typeof Ionicons.glyphMap {
+  const n = name.toLowerCase();
+  if (n.includes('wifi')) return 'wifi';
+  if (n.includes('parking')) return 'car-outline';
+  if (n.includes('pool')) return 'water-outline';
+  if (n.includes('gym') || n.includes('fitness')) return 'barbell-outline';
+  if (n.includes('spa')) return 'flower-outline';
+  if (n.includes('restaurant') || n.includes('breakfast')) return 'restaurant-outline';
+  if (n.includes('bar')) return 'wine-outline';
+  if (n.includes('laundry')) return 'shirt-outline';
+  if (n.includes('front desk')) return 'time-outline';
+  if (n.includes('business') || n.includes('conference')) return 'briefcase-outline';
+  if (n.includes('garden')) return 'leaf-outline';
+  if (n.includes('currency')) return 'cash-outline';
+  return 'checkmark-circle-outline';
+}
+
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -29,6 +48,7 @@ export default function PropertyDetailScreen() {
   const [expanded, setExpanded] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
+  const [tab, setTab] = useState<Tab>('overview');
 
   useEffect(() => {
     getPropertyById(id)
@@ -86,6 +106,7 @@ export default function PropertyDetailScreen() {
   const avgRating = reviews.length
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : property.rating;
+  const facilities = property.facilities ?? [];
 
   return (
     <View style={styles.container}>
@@ -97,20 +118,14 @@ export default function PropertyDetailScreen() {
           ) : (
             <View style={[styles.hero, { backgroundColor: COLORS.primaryLight }]} />
           )}
-          {/* Overlay gradient feel */}
           <View style={styles.heroOverlay} />
 
-          {/* Back button */}
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
           </TouchableOpacity>
-
-          {/* Options button */}
           <TouchableOpacity style={styles.optionsBtn}>
             <Ionicons name="ellipsis-horizontal" size={20} color={COLORS.textPrimary} />
           </TouchableOpacity>
-
-          {/* Heart button */}
           <TouchableOpacity style={styles.heartBtn} onPress={handleToggleLike}>
             <Ionicons
               name={liked ? 'heart' : 'heart-outline'}
@@ -121,15 +136,6 @@ export default function PropertyDetailScreen() {
         </View>
 
         <View style={styles.body}>
-          {/* Amenities */}
-          <View style={styles.amenitiesRow}>
-            <AmenityChip icon="wifi" label={t.free_wifi} />
-            <AmenityChip icon="restaurant-outline" label={t.free_breakfast} />
-            {avgRating != null && (
-              <AmenityChip icon="star" label={avgRating.toFixed(1)} iconColor={COLORS.accent} />
-            )}
-          </View>
-
           {/* Name + price row */}
           <View style={styles.namePriceRow}>
             <Text style={styles.name} numberOfLines={2}>{property.name}</Text>
@@ -149,7 +155,7 @@ export default function PropertyDetailScreen() {
             </Text>
           </View>
 
-          {/* Rating count */}
+          {/* Rating summary */}
           {avgRating != null && (
             <View style={styles.ratingDetailRow}>
               {[1, 2, 3, 4, 5].map((s) => (
@@ -167,68 +173,107 @@ export default function PropertyDetailScreen() {
             </View>
           )}
 
-          {/* Description */}
-          {desc ? (
+          {/* Tabs */}
+          <View style={styles.tabRow}>
+            <TabButton label="Overview" active={tab === 'overview'} onPress={() => setTab('overview')} />
+            <TabButton label="Amenities" active={tab === 'amenities'} onPress={() => setTab('amenities')} />
+            <TabButton
+              label={`Reviews${reviews.length ? ` (${reviews.length})` : ''}`}
+              active={tab === 'reviews'}
+              onPress={() => setTab('reviews')}
+            />
+          </View>
+
+          {tab === 'overview' && (
             <>
-              <Text style={styles.sectionTitle}>{t.description}</Text>
-              <Text style={styles.descText}>{expanded ? desc : shortDesc}</Text>
-              {desc.length > 140 && (
-                <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-                  <Text style={styles.readMore}>
-                    {expanded ? 'Show less' : t.read_more}
-                  </Text>
-                </TouchableOpacity>
+              {desc ? (
+                <>
+                  <Text style={styles.sectionTitle}>{t.description}</Text>
+                  <Text style={styles.descText}>{expanded ? desc : shortDesc}</Text>
+                  {desc.length > 140 && (
+                    <TouchableOpacity onPress={() => setExpanded(!expanded)}>
+                      <Text style={styles.readMore}>
+                        {expanded ? 'Show less' : t.read_more}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : null}
+
+              <Text style={styles.sectionTitle}>{t.preview}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewScroll}>
+                {[property.thumbnail, property.thumbnail, property.thumbnail]
+                  .filter(Boolean)
+                  .map((uri, i) => (
+                    <Image key={i} source={{ uri: uri! }} style={styles.previewThumb} />
+                  ))}
+              </ScrollView>
+            </>
+          )}
+
+          {tab === 'amenities' && (
+            <View style={styles.amenityGrid}>
+              {facilities.length === 0 ? (
+                <Text style={styles.reviewHint}>No amenities listed for this property yet.</Text>
+              ) : (
+                facilities.map((f) => (
+                  <View key={f} style={styles.amenityGridItem}>
+                    <View style={styles.amenityGridIconWrap}>
+                      <Ionicons name={facilityIcon(f)} size={16} color={COLORS.primary} />
+                    </View>
+                    <Text style={styles.amenityGridLabel} numberOfLines={1}>{f}</Text>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {tab === 'reviews' && (
+            <>
+              <View style={styles.reviewsHeaderRow}>
+                <Text style={styles.reviewsCount}>
+                  {reviews.length} {reviews.length === 1 ? 'review' : t.reviews}
+                </Text>
+                {isAuthenticated && eligibility?.canReview && (
+                  <TouchableOpacity
+                    onPress={() => router.push({ pathname: '/write-review', params: { propertyId: property.id } })}
+                  >
+                    <Text style={styles.writeReviewLink}>{t.write_a_review}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {isAuthenticated && eligibility && !eligibility.canReview && (
+                <Text style={styles.reviewHint}>
+                  {eligibility.reason === 'already_reviewed' ? t.review_already_submitted_msg : t.review_no_booking_msg}
+                </Text>
+              )}
+              {reviews.length === 0 ? (
+                <Text style={styles.reviewHint}>{t.no_reviews_yet}</Text>
+              ) : (
+                reviews.map((r) => (
+                  <View key={r.id} style={styles.reviewCard}>
+                    <View style={styles.reviewTopRow}>
+                      <View style={styles.reviewAvatarWrap}>
+                        <Text style={styles.reviewAvatarText}>{r.authorName.slice(0, 1).toUpperCase()}</Text>
+                      </View>
+                      <Text style={styles.reviewAuthor}>{r.authorName}</Text>
+                      <View style={{ flex: 1 }} />
+                      <View style={styles.reviewStars}>
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Ionicons
+                            key={s}
+                            name="star"
+                            size={12}
+                            color={s <= r.rating ? COLORS.accent : COLORS.border}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                    {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+                  </View>
+                ))
               )}
             </>
-          ) : null}
-
-          {/* Preview thumbnails (show hero repeated as placeholders) */}
-          <Text style={styles.sectionTitle}>{t.preview}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewScroll}>
-            {[property.thumbnail, property.thumbnail, property.thumbnail]
-              .filter(Boolean)
-              .map((uri, i) => (
-                <Image key={i} source={{ uri: uri! }} style={styles.previewThumb} />
-              ))}
-          </ScrollView>
-
-          {/* Reviews */}
-          <View style={styles.reviewsHeaderRow}>
-            <Text style={[styles.sectionTitle, { marginTop: 0 }]}>{t.reviews_title}</Text>
-            {isAuthenticated && eligibility?.canReview && (
-              <TouchableOpacity
-                onPress={() => router.push({ pathname: '/write-review', params: { propertyId: property.id } })}
-              >
-                <Text style={styles.writeReviewLink}>{t.write_a_review}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {isAuthenticated && eligibility && !eligibility.canReview && (
-            <Text style={styles.reviewHint}>
-              {eligibility.reason === 'already_reviewed' ? t.review_already_submitted_msg : t.review_no_booking_msg}
-            </Text>
-          )}
-          {reviews.length === 0 ? (
-            <Text style={styles.reviewHint}>{t.no_reviews_yet}</Text>
-          ) : (
-            reviews.map((r) => (
-              <View key={r.id} style={styles.reviewCard}>
-                <View style={styles.reviewTopRow}>
-                  <Text style={styles.reviewAuthor}>{r.authorName}</Text>
-                  <View style={styles.reviewStars}>
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Ionicons
-                        key={s}
-                        name="star"
-                        size={12}
-                        color={s <= r.rating ? COLORS.accent : COLORS.border}
-                      />
-                    ))}
-                  </View>
-                </View>
-                {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
-              </View>
-            ))
           )}
         </View>
       </ScrollView>
@@ -255,20 +300,11 @@ export default function PropertyDetailScreen() {
   );
 }
 
-function AmenityChip({
-  icon,
-  label,
-  iconColor,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  iconColor?: string;
-}) {
+function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
-    <View style={styles.amenityChip}>
-      <Ionicons name={icon} size={14} color={iconColor ?? COLORS.primary} />
-      <Text style={styles.amenityText}>{label}</Text>
-    </View>
+    <TouchableOpacity style={[styles.tabBtn, active && styles.tabBtnActive]} onPress={onPress} activeOpacity={0.8}>
+      <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -322,18 +358,6 @@ const styles = StyleSheet.create({
 
   body: { padding: 20 },
 
-  amenitiesRow: { flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
-  amenityChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: COLORS.primaryLight,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  amenityText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
-
   namePriceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -351,19 +375,60 @@ const styles = StyleSheet.create({
   ratingDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 16 },
   ratingDetailText: { fontSize: 13, color: COLORS.textSecondary, marginLeft: 4 },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginTop: 16, marginBottom: 8 },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.backgroundAlt,
+    borderRadius: RADIUS.full,
+    padding: 4,
+    marginBottom: 16,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: RADIUS.full,
+    alignItems: 'center',
+  },
+  tabBtnActive: {
+    backgroundColor: COLORS.card,
+    ...SHADOW.sm,
+  },
+  tabBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
+  tabBtnTextActive: { color: COLORS.primary },
+
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginTop: 4, marginBottom: 8 },
   descText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
   readMore: { fontSize: 13, color: COLORS.primary, fontWeight: '600', marginTop: 6 },
 
   previewScroll: { marginTop: 4 },
   previewThumb: { width: 90, height: 70, borderRadius: RADIUS.md, marginRight: 10 },
 
+  amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  amenityGridItem: {
+    width: '47%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: COLORS.backgroundAlt,
+    borderRadius: RADIUS.md,
+    padding: 10,
+  },
+  amenityGridIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  amenityGridLabel: { flex: 1, fontSize: 12, fontWeight: '600', color: COLORS.textPrimary },
+
   reviewsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
+    marginBottom: 12,
   },
+  reviewsCount: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   writeReviewLink: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
   reviewHint: { fontSize: 13, color: COLORS.textMuted, marginBottom: 8 },
   reviewCard: {
@@ -372,7 +437,16 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
   },
-  reviewTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  reviewTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6, gap: 8 },
+  reviewAvatarWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewAvatarText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   reviewAuthor: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
   reviewStars: { flexDirection: 'row', gap: 2 },
   reviewComment: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
