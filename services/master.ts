@@ -17,3 +17,19 @@ export async function getFacilities(): Promise<MasterOption[]> {
   const { data } = await api.get<MasterOption[]>('/master/facilities');
   return data ?? [];
 }
+
+export type SiteContact = {
+  phone?: string;
+  phone2?: string;
+  email?: string;
+  email2?: string;
+  address?: string;
+  city?: string;
+  openingHours?: string;
+};
+
+/** Admin-configured support contact info — a singleton, may be partially or fully unset. */
+export async function getSiteContact(): Promise<SiteContact> {
+  const { data } = await api.get<SiteContact>('/site-contact');
+  return data ?? {};
+}

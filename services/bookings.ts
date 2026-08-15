@@ -1,5 +1,10 @@
-import api from './api';
+import api, { getErrorMessage } from './api';
 import { getImageUrl } from './properties';
+
+// Re-exported for existing call sites — the helper itself now lives in
+// api.ts since it's generic, not booking-specific (also used by the
+// notifications screen for the same PUT /users/me error shape).
+export { getErrorMessage };
 
 export type BookingStatus =
   | 'PENDING'
@@ -36,7 +41,7 @@ export type CreateBookingResult = Booking & {
 
 export type PaymentMethod = 'STRIPE' | 'CASH' | 'ETH_SWITCH';
 
-export type CreateBookingPayload = {
+type CreateBookingCommon = {
   propertyId: number;
   roomId: number;
   numberOfRooms?: number;
@@ -45,26 +50,29 @@ export type CreateBookingPayload = {
   checkInDate: string;
   checkOutDate: string;
   paymentMethod?: PaymentMethod;
-  /** Required by the API's request-body validation (it checks the body for
-   * either userId or full guest details before the request ever reaches the
-   * controller — the controller itself only trusts req.userId from the JWT
-   * and ignores this value, but validation still needs it present). Pass
-   * the signed-in user's own id here. */
-  userId: number;
 };
+
+/**
+ * Unauthenticated bookings require a `guestVerificationToken` proving the
+ * caller owns the email/phone they entered — see `requestGuestBookingOtp`/
+ * `verifyGuestBookingOtp` below. The API's `addBooking` controller ignores
+ * any body `userId` for unauthenticated callers and, once a verification
+ * token is present, resolves the booking's owner from the token itself —
+ * raw `guestName`/`guestEmail`/`guestPhone`/`country` fields (accepted by
+ * the zod schema for staff-entered `/bookings/reception` bookings) are not
+ * a valid path for `POST /bookings` from an unauthenticated caller.
+ */
+export type CreateBookingPayload = CreateBookingCommon &
+  (
+    | { userId: number; guestVerificationToken?: undefined }
+    | { userId?: undefined; guestVerificationToken: string }
+  );
 
 export type CheckoutResult =
   | { confirmed: true; bookingReference: string }
   | { confirmed?: false; paymentLink: string; holdExpiresAt: string; bookingReference: string };
 
 const DEFAULT_CURRENCY = 'USD';
-
-/** Extracts a human-readable message from an API error response — the
- * booking endpoints are inconsistent about the key (`message` on most
- * validation/business errors, `error` on a few auth/guest-booking guards). */
-export function getErrorMessage(err: any, fallback: string): string {
-  return err?.response?.data?.message ?? err?.response?.data?.error ?? fallback;
-}
 
 /** Maps the API's raw booking DTO (checkInDate/checkOutDate/totalPrice/nested property+rooms) to the shape the UI consumes. */
 function normalize(raw: any): Booking {
@@ -110,6 +118,23 @@ export async function getBookingByRef(ref: string): Promise<Booking> {
 }
 
 /**
+ * Synchronously asks ETH-Switch what actually happened for a PENDING
+ * booking's payment, instead of waiting on the slow 5-minute background
+ * poll job — ETH-Switch's own returnUrl always lands on the web app (it's a
+ * fixed backend config value, not something the client controls), so unlike
+ * Stripe there's no session id this app can verify on its own. This mirrors
+ * what the web app calls the moment a guest lands back on booking-details.
+ * 404s for bookings that aren't ETH-Switch or have already left PENDING —
+ * safe to call opportunistically and ignore failures.
+ */
+export async function verifyEthSwitchPayment(
+  reference: string,
+): Promise<{ bookingReference: string; bookingStatus: string; paymentStatus: string }> {
+  const { data } = await api.put(`/bookings/ets/verify/${reference}`);
+  return data;
+}
+
+/**
  * Creates a booking. The response's `status` depends entirely on
  * `paymentMethod`: CASH bookings come back already CONFIRMED (no
  * `paymentLink`); STRIPE/ETH_SWITCH bookings come back PENDING with a
@@ -122,6 +147,7 @@ export async function createBooking(
 ): Promise<CreateBookingResult> {
   const { data } = await api.post('/bookings', {
     userId: payload.userId,
+    guestVerificationToken: payload.guestVerificationToken,
     propertyId: payload.propertyId,
     checkInDate: payload.checkInDate,
     checkOutDate: payload.checkOutDate,
@@ -158,6 +184,59 @@ export async function createCheckout(
   payload?: { paymentMethod?: PaymentMethod },
 ): Promise<CheckoutResult> {
   const { data } = await api.post(`/bookings/${bookingId}/checkout`, payload ?? {});
+  return data;
+}
+
+// --- GUEST CHECKOUT VERIFICATION (OTP) ---
+//
+// Two-step identity check for anonymous bookings, matching/creating a
+// "guest" account by email or phone: request an OTP, then verify it to
+// receive the `guestVerificationToken` that `createBooking` requires. The
+// account is created unactivated (no password) — the guest can later use
+// "forgot password" with the same email to claim and log into it.
+
+export type GuestOtpRequestPayload = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+};
+
+export type GuestOtpRequestResult = {
+  requiresOtp: true;
+  guestOtpToken: string;
+  isNewAccount: boolean;
+  message: string;
+  /** Only present for whitelisted demo accounts (local/staging testing). */
+  demoOtp?: string;
+};
+
+export type GuestOtpVerifyResult = {
+  verified: true;
+  guestVerificationToken: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+export async function requestGuestBookingOtp(
+  payload: GuestOtpRequestPayload,
+): Promise<GuestOtpRequestResult> {
+  const { data } = await api.post('/bookings/guest/request-otp', payload);
+  return data;
+}
+
+export async function verifyGuestBookingOtp(
+  guestOtpToken: string,
+  otp: string,
+): Promise<GuestOtpVerifyResult> {
+  const { data } = await api.post('/bookings/guest/verify-otp', { guestOtpToken, otp });
+  return data;
+}
+
+export async function resendGuestBookingOtp(guestOtpToken: string): Promise<GuestOtpRequestResult> {
+  const { data } = await api.post('/bookings/guest/resend-otp', { guestOtpToken });
   return data;
 }
 

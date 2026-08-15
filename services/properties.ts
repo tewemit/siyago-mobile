@@ -9,6 +9,18 @@ export type RoomOption = {
   maxChildren: number;
 };
 
+/**
+ * A payment method the property owner has enabled, resolved to the gateway
+ * enum `POST /bookings` actually accepts (`paymentType.gateway` is the
+ * admin-set source of truth server-side — the display `name` is informational
+ * only and must never be sent to the API in its place).
+ */
+export type PropertyPaymentMethod = {
+  name: string;
+  logo?: string;
+  gateway: 'STRIPE' | 'CASH' | 'ETH_SWITCH';
+};
+
 export type Property = {
   id: string;
   name: string;
@@ -25,6 +37,9 @@ export type Property = {
   starRating?: string;
   facilities?: string[];
   rooms?: RoomOption[];
+  paymentTypes?: PropertyPaymentMethod[];
+  /** Extra gallery photos beyond the main thumbnail — only present on the `getPropertyById` response. */
+  images?: string[];
 };
 
 export type BrowseParams = {
@@ -52,6 +67,12 @@ const DEFAULT_CURRENCY = 'USD';
 export function getImageUrl(mainImage?: string | null): string | undefined {
   if (!mainImage) return undefined;
   return `${API_HOST}/uploads/properties/main-images/${mainImage}`;
+}
+
+/** Extra gallery photos are stored under a different path than the main image. */
+function getGalleryImageUrl(image?: string | null): string | undefined {
+  if (!image) return undefined;
+  return `${API_HOST}/uploads/properties/images/${image}`;
 }
 
 /**
@@ -120,7 +141,32 @@ export function normalizeProperty(raw: any): Property {
           maxChildren: r.numberOfChildren ?? 0,
         }))
       : undefined,
+    paymentTypes: Array.isArray(raw.paymentTypes)
+      ? raw.paymentTypes
+          .map((pt: any) => pt.paymentType)
+          .filter((pt: any) => pt?.name && pt?.gateway)
+          .map((pt: any) => ({ name: pt.name, logo: pt.logo ?? undefined, gateway: pt.gateway }))
+      : undefined,
+    images: Array.isArray(raw.images)
+      ? raw.images.map((im: any) => getGalleryImageUrl(im.image)).filter(Boolean)
+      : undefined,
   };
+}
+
+/** Generic fallback shown only when a property hasn't configured any payment methods yet. */
+const FALLBACK_PAYMENT_METHODS: PropertyPaymentMethod[] = [
+  { name: 'Pay at property', gateway: 'CASH' },
+  { name: 'Global credit and debit cards', gateway: 'STRIPE' },
+];
+
+/**
+ * Payment methods available for a given property, sourced from the property's
+ * own configured `paymentTypes` (each carries an admin-set gateway — see
+ * `PropertyPaymentMethod`). Falls back to a generic Cash/Card pair when the
+ * property hasn't configured any yet, mirroring the web app's booking flow.
+ */
+export function getAvailablePaymentMethods(property: Property): PropertyPaymentMethod[] {
+  return property.paymentTypes?.length ? property.paymentTypes : FALLBACK_PAYMENT_METHODS;
 }
 
 /**

@@ -25,7 +25,9 @@ export const COLORS = {
   error: '#EF4444',
   border: '#E2E8F0',
   overlay: 'rgba(15,23,42,0.4)',
-  tabBar: '#FFFFFF',
+  // Soft navy tint (not pure white) so the bar reads as a distinct surface
+  // against the page's off-white background instead of blending into it.
+  tabBar: '#EEF3F9',
 };
 
 export const RADIUS = {

@@ -50,4 +50,10 @@ export async function clearToken() {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
+/** Extracts a human-readable message from an API error response — most
+ * endpoints use `data.message`, a few auth/validation guards use `data.error`. */
+export function getErrorMessage(err: any, fallback: string): string {
+  return err?.response?.data?.message ?? err?.response?.data?.error ?? fallback;
+}
+
 export default api;

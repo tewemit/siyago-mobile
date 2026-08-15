@@ -3,9 +3,11 @@ import { useI18n } from '../../context/I18nContext';
 import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { LOCALE_NAMES, type Locale } from '../../i18n/translations';
+import { getSiteContact, type SiteContact } from '../../services/master';
 import { useRouter } from 'expo-router';
 import {
   Alert,
+  Linking,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -37,6 +39,24 @@ export default function ProfileScreen() {
         </View>
       </SafeAreaView>
     );
+  }
+
+  async function handleHelpSupport() {
+    const contact = await getSiteContact().catch((): SiteContact => ({}));
+    if (!contact.email && !contact.phone) {
+      Alert.alert('Help & Support', 'Contact us at support@siyago.com');
+      return;
+    }
+    const buttons: { text: string; onPress?: () => void; style?: 'cancel' }[] = [
+      { text: t.cancel, style: 'cancel' },
+    ];
+    if (contact.email) {
+      buttons.push({ text: `Email ${contact.email}`, onPress: () => Linking.openURL(`mailto:${contact.email}`) });
+    }
+    if (contact.phone) {
+      buttons.push({ text: `Call ${contact.phone}`, onPress: () => Linking.openURL(`tel:${contact.phone}`) });
+    }
+    Alert.alert('Help & Support', 'How would you like to reach us?', buttons);
   }
 
   async function handleLogout() {
@@ -133,6 +153,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon="help-circle-outline"
             label="Help & Support"
+            onPress={handleHelpSupport}
           />
           <MenuItem
             icon="log-out-outline"

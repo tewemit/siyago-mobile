@@ -1,5 +1,6 @@
 import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
 import { getHostProperties, type Property } from '../../services/properties';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,10 +9,13 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HostPropertiesScreen() {
+  const router = useRouter();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,17 +54,24 @@ export default function HostPropertiesScreen() {
             <Text style={styles.empty}>No properties yet.</Text>
           }
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.location}>
-                {item.city}{item.country ? `, ${item.country}` : ''}
-              </Text>
-              <Text style={styles.price}>
-                {item.pricePerNight > 0
-                  ? `${item.currency} ${item.pricePerNight.toLocaleString()} / night`
-                  : 'Rates managed on the web dashboard'}
-              </Text>
-            </View>
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.8}
+              onPress={() => router.push({ pathname: '/property/[id]', params: { id: item.id } })}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.location}>
+                  {item.city}{item.country ? `, ${item.country}` : ''}
+                </Text>
+                <Text style={styles.price}>
+                  {item.pricePerNight > 0
+                    ? `${item.currency} ${item.pricePerNight.toLocaleString()} / night`
+                    : 'Rates managed on the web dashboard'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
           )}
         />
       )}
@@ -71,6 +82,9 @@ export default function HostPropertiesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: COLORS.card,
     borderRadius: RADIUS.lg,
     padding: 14,

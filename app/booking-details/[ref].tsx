@@ -1,10 +1,11 @@
 import { useI18n } from '../../context/I18nContext';
 import { COLORS, RADIUS, SHADOW, STATUS_COLOR } from '../../constants/theme';
-import { getBookingByRef, type Booking } from '../../services/bookings';
+import { getBookingByRef, verifyEthSwitchPayment, type Booking } from '../../services/bookings';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -15,6 +16,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+const PENDING_POLL_INTERVAL_MS = 4000;
+const PENDING_POLL_TIMEOUT_MS = 10 * 60 * 1000; // stop after 10 minutes either way
+
 export default function BookingDetailsScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>();
   const router = useRouter();
@@ -22,12 +26,62 @@ export default function BookingDetailsScreen() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  async function refresh() {
+    try {
+      const b = await getBookingByRef(ref);
+      setBooking(b);
+    } catch {
+      // transient network hiccup — next poll tick or foreground event retries
+    }
+  }
+
+  // For a PENDING booking, ask the gateway directly whether payment actually
+  // went through instead of just re-reading whatever the DB currently says.
+  // ETH-Switch's own success redirect lands on the web app (a fixed backend
+  // config value, not something this app controls) rather than back in this
+  // screen, and its background confirmation job only runs every 5 minutes —
+  // this is the same fast synchronous check the web app fires the moment a
+  // guest lands back on booking-details. A 404 just means this booking isn't
+  // an ETH-Switch payment (e.g. Stripe/cash) — safe to ignore.
+  async function checkForUpdate() {
+    try {
+      await verifyEthSwitchPayment(ref);
+    } catch {
+      // not an ETH-Switch booking, or the gateway call itself failed — the
+      // plain refresh below still covers Stripe/webhook-confirmed bookings.
+    }
+    await refresh();
+  }
+
   useEffect(() => {
-    getBookingByRef(ref)
-      .then(setBooking)
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+    refresh().finally(() => setIsLoading(false));
   }, [ref]);
+
+  // Keep a PENDING booking honest: check immediately, then keep polling in
+  // the background and re-check the instant the app returns to the
+  // foreground (e.g. the user switching back after paying in the external
+  // browser) — there's no deep link or push telling the app payment
+  // completed, so this is how we notice instead of leaving a stale PENDING
+  // status on screen indefinitely.
+  useEffect(() => {
+    if (!booking || booking.status !== 'PENDING') return;
+    checkForUpdate();
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      if (Date.now() - startedAt > PENDING_POLL_TIMEOUT_MS) {
+        clearInterval(interval);
+        return;
+      }
+      checkForUpdate();
+    }, PENDING_POLL_INTERVAL_MS);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkForUpdate();
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [booking?.status, ref]);
 
   if (isLoading) {
     return (

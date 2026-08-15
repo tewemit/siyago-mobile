@@ -1,8 +1,13 @@
 import { useI18n } from '../context/I18nContext';
+import { useAuth } from '../context/AuthContext';
 import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { getErrorMessage } from '../services/api';
+import { updateMe, type NotificationChannel } from '../services/auth';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -13,9 +18,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// UI-only for now — toggles update local state only. Wiring these to a
-// notification-preferences endpoint (and to actual push-token registration)
-// is a follow-up once that backend support exists.
+// The categorized toggles below (Booking Updates, Deals & Offers, etc.) are
+// still UI-only — the API has no per-category notification model, only a
+// single account-wide EMAIL/SMS delivery-channel preference (see the
+// "Notification Channels" section, which IS wired to PUT /users/me).
 type Prefs = {
   push: boolean;
   bookingConfirmations: boolean;
@@ -27,8 +33,6 @@ type Prefs = {
   recommendations: boolean;
   promotions: boolean;
   messages: boolean;
-  channelEmail: boolean;
-  channelSms: boolean;
 };
 
 const DEFAULT_PREFS: Prefs = {
@@ -42,17 +46,45 @@ const DEFAULT_PREFS: Prefs = {
   recommendations: true,
   promotions: false,
   messages: true,
-  channelEmail: true,
-  channelSms: false,
 };
 
 export default function NotificationsScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { user, refresh } = useAuth();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
+  const [channels, setChannels] = useState<NotificationChannel[]>(
+    user?.notificationChannels?.length ? user.notificationChannels : ['EMAIL', 'SMS'],
+  );
+  const [savingChannel, setSavingChannel] = useState<NotificationChannel | null>(null);
+
+  useEffect(() => {
+    if (user?.notificationChannels?.length) setChannels(user.notificationChannels);
+  }, [user?.notificationChannels]);
 
   function toggle(key: keyof Prefs) {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  async function toggleChannel(ch: NotificationChannel) {
+    const isOn = channels.includes(ch);
+    if (isOn && channels.length === 1) {
+      Alert.alert('At least one channel required', 'Turn on another channel before turning this one off.');
+      return;
+    }
+    const previous = channels;
+    const next = isOn ? channels.filter((c) => c !== ch) : [...channels, ch];
+    setChannels(next);
+    setSavingChannel(ch);
+    try {
+      await updateMe({ notificationChannels: next });
+      await refresh();
+    } catch (err: any) {
+      setChannels(previous);
+      Alert.alert(t.error, getErrorMessage(err, 'Could not update notification settings'));
+    } finally {
+      setSavingChannel(null);
+    }
   }
 
   const pushOff = !prefs.push;
@@ -68,7 +100,36 @@ export default function NotificationsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        {/* Master toggle */}
+        {/* Real, API-backed section */}
+        <View style={styles.syncedRow}>
+          <Ionicons name="cloud-done-outline" size={13} color={COLORS.success} />
+          <Text style={styles.syncedText}>Synced to your account</Text>
+        </View>
+        <Text style={styles.sectionTitle}>Notification Channels</Text>
+        <View style={styles.sectionCard}>
+          <ChannelRow
+            icon="mail-outline"
+            label="Email"
+            sub={user?.email}
+            active={channels.includes('EMAIL')}
+            saving={savingChannel === 'EMAIL'}
+            onToggle={() => toggleChannel('EMAIL')}
+          />
+          <ChannelRow
+            icon="chatbox-ellipses-outline"
+            label="SMS"
+            sub={user?.phoneNumber ?? 'No phone number on file'}
+            active={channels.includes('SMS')}
+            saving={savingChannel === 'SMS'}
+            onToggle={() => toggleChannel('SMS')}
+            noBorder
+          />
+        </View>
+        <Text style={styles.channelHint}>
+          Booking confirmations and verification codes are sent through whichever channel(s) you enable here. SMS delivery is still being rolled out on our end — we recommend keeping email on as a backup.
+        </Text>
+
+        {/* Local-only categorized toggles */}
         <View style={styles.masterCard}>
           <View style={styles.masterIconWrap}>
             <Ionicons name="notifications" size={22} color={COLORS.primary} />
@@ -187,27 +248,51 @@ export default function NotificationsScreen() {
           />
         </Section>
 
-        <Section title="Also notify me via">
-          <Row
-            icon="mail-outline"
-            label="Email"
-            value={prefs.channelEmail}
-            onToggle={() => toggle('channelEmail')}
-          />
-          <Row
-            icon="chatbox-ellipses-outline"
-            label="SMS"
-            value={prefs.channelSms}
-            onToggle={() => toggle('channelSms')}
-            noBorder
-          />
-        </Section>
-
         <Text style={styles.footnote}>
-          These preferences are stored on this device for now. Once notification delivery is fully connected, they'll sync to your account.
+          Categories above (Booking Updates, Deals & Offers, etc.) aren't connected to your account yet — only the Notification Channels section at the top is a real, saved setting.
         </Text>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function ChannelRow({
+  icon,
+  label,
+  sub,
+  active,
+  saving,
+  onToggle,
+  noBorder,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  sub?: string;
+  active: boolean;
+  saving: boolean;
+  onToggle: () => void;
+  noBorder?: boolean;
+}) {
+  return (
+    <View style={[styles.row, noBorder && { borderBottomWidth: 0 }]}>
+      <View style={styles.rowIconWrap}>
+        <Ionicons name={icon} size={17} color={COLORS.primary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        {sub ? <Text style={styles.rowSub} numberOfLines={1}>{sub}</Text> : null}
+      </View>
+      {saving ? (
+        <ActivityIndicator size="small" color={COLORS.primary} />
+      ) : (
+        <Switch
+          value={active}
+          onValueChange={onToggle}
+          trackColor={{ false: COLORS.border, true: COLORS.primary }}
+          thumbColor="#fff"
+        />
+      )}
+    </View>
   );
 }
 
@@ -285,6 +370,17 @@ const styles = StyleSheet.create({
   topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
 
   body: { padding: 16, paddingBottom: 40 },
+
+  syncedRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6, marginLeft: 4 },
+  syncedText: { fontSize: 11, fontWeight: '700', color: COLORS.success },
+  channelHint: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    lineHeight: 17,
+    marginTop: 8,
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
 
   masterCard: {
     flexDirection: 'row',

@@ -1,5 +1,7 @@
 import api, { clearToken, saveToken } from './api';
 
+export type NotificationChannel = 'EMAIL' | 'SMS';
+
 export type AuthUser = {
   id: string;
   email: string;
@@ -8,6 +10,9 @@ export type AuthUser = {
   role: string;
   phoneNumber?: string;
   profilePicture?: string;
+  /** General notification delivery channel(s) — booking confirmations, OTP
+   * codes, reminders. Always at least one value; API rejects an empty list. */
+  notificationChannels?: NotificationChannel[];
 };
 
 export type LoginResponse = {
@@ -131,12 +136,16 @@ export async function getMe(): Promise<AuthUser> {
 }
 
 /**
- * Update the authenticated user's basic profile fields.
+ * Update the authenticated user's basic profile fields and/or notification
+ * channel preference. Fields left undefined are left untouched server-side
+ * (Prisma ignores undefined keys on partial update), so callers can send
+ * just `notificationChannels` without re-sending name/phone.
  */
 export async function updateMe(payload: {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
+  notificationChannels?: NotificationChannel[];
 }): Promise<AuthUser> {
   const { data } = await api.put<AuthUser>('/users/me', payload);
   return data;

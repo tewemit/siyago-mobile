@@ -1,7 +1,7 @@
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
-import { getPropertyById, type Property } from '../../services/properties';
+import { formatLocation, getPropertyById, type Property } from '../../services/properties';
 import { getFavoriteStatus, toggleFavorite } from '../../services/favorites';
 import { getPropertyReviews, getReviewEligibility, type Review, type ReviewEligibility } from '../../services/reviews';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,9 +10,11 @@ import {
   ActivityIndicator,
   Image,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,6 +44,7 @@ export default function PropertyDetailScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const { width } = useWindowDimensions();
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [liked, setLiked] = useState(false);
@@ -49,6 +52,7 @@ export default function PropertyDetailScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [tab, setTab] = useState<Tab>('overview');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     getPropertyById(id)
@@ -82,6 +86,17 @@ export default function PropertyDetailScreen() {
     }
   }
 
+  async function handleShare() {
+    if (!property) return;
+    try {
+      await Share.share({
+        message: `Check out ${property.name} on Siyago — ${formatLocation(property)}`,
+      });
+    } catch {
+      // User dismissed the share sheet — nothing to do.
+    }
+  }
+
   if (isLoading) {
     return (
       <View style={styles.center}>
@@ -107,23 +122,53 @@ export default function PropertyDetailScreen() {
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : property.rating;
   const facilities = property.facilities ?? [];
+  const heroImages = property.images?.length
+    ? property.images
+    : property.thumbnail
+      ? [property.thumbnail]
+      : [];
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Hero */}
         <View style={styles.heroWrapper}>
-          {property.thumbnail ? (
-            <Image source={{ uri: property.thumbnail }} style={styles.hero} />
+          {heroImages.length > 1 ? (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                setActiveImageIndex(index);
+              }}
+            >
+              {heroImages.map((uri, i) => (
+                <Image key={i} source={{ uri }} style={[styles.hero, { width }]} />
+              ))}
+            </ScrollView>
+          ) : heroImages[0] ? (
+            <Image source={{ uri: heroImages[0] }} style={styles.hero} />
           ) : (
             <View style={[styles.hero, { backgroundColor: COLORS.primaryLight }]} />
           )}
-          <View style={styles.heroOverlay} />
+          <View style={styles.heroOverlay} pointerEvents="none" />
+
+          {heroImages.length > 1 && (
+            <View style={styles.heroDotsRow} pointerEvents="none">
+              {heroImages.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.heroDot, i === activeImageIndex && styles.heroDotActive]}
+                />
+              ))}
+            </View>
+          )}
 
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.optionsBtn}>
+          <TouchableOpacity style={styles.optionsBtn} onPress={handleShare}>
             <Ionicons name="ellipsis-horizontal" size={20} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.heartBtn} onPress={handleToggleLike}>
@@ -199,15 +244,6 @@ export default function PropertyDetailScreen() {
                   )}
                 </>
               ) : null}
-
-              <Text style={styles.sectionTitle}>{t.preview}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewScroll}>
-                {[property.thumbnail, property.thumbnail, property.thumbnail]
-                  .filter(Boolean)
-                  .map((uri, i) => (
-                    <Image key={i} source={{ uri: uri! }} style={styles.previewThumb} />
-                  ))}
-              </ScrollView>
             </>
           )}
 
@@ -318,6 +354,25 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.08)',
   },
+  heroDotsRow: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  heroDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  heroDotActive: {
+    backgroundColor: '#fff',
+    width: 16,
+  },
 
   backBtn: {
     position: 'absolute',
@@ -398,9 +453,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginTop: 4, marginBottom: 8 },
   descText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
   readMore: { fontSize: 13, color: COLORS.primary, fontWeight: '600', marginTop: 6 },
-
-  previewScroll: { marginTop: 4 },
-  previewThumb: { width: 90, height: 70, borderRadius: RADIUS.md, marginRight: 10 },
 
   amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   amenityGridItem: {

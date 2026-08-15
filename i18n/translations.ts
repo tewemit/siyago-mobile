@@ -24,6 +24,7 @@ export type T = {
   sign_in_sub: string;
   email: string;
   send_otp: string;
+  next: string;
   sending: string;
   no_account: string;
   sign_up: string;
@@ -151,6 +152,13 @@ export type T = {
   siyago_partner_sub: string;
   cancel_booking_confirm: string;
   browse_properties: string;
+  full_name: string;
+  continue_as_guest: string;
+  have_account_sign_in: string;
+  guest_booking_reference_msg: string;
+  guest_otp_intro: string;
+  verified_as: string;
+  edit_details: string;
 };
 
 const en: T = {
@@ -166,6 +174,7 @@ const en: T = {
   sign_in_sub: 'Sign in to your account',
   email: 'Email address',
   send_otp: 'Send OTP',
+  next: 'Next',
   sending: 'Sending…',
   no_account: "Don't have an account?",
   sign_up: 'Sign Up',
@@ -293,6 +302,13 @@ const en: T = {
   siyago_partner_sub: 'List your property and start earning',
   cancel_booking_confirm: 'Are you sure you want to cancel this booking?',
   browse_properties: 'Browse properties',
+  full_name: 'Full name',
+  continue_as_guest: 'Continue as guest',
+  have_account_sign_in: 'Have an account? Sign in',
+  guest_booking_reference_msg: "Save your booking reference — sign up anytime to track this trip in My Trips.",
+  guest_otp_intro: "We'll text or email you a 6-digit code to confirm it's really you before booking.",
+  verified_as: 'Verified as',
+  edit_details: 'Edit details',
 };
 
 const ar: T = {
@@ -308,6 +324,7 @@ const ar: T = {
   sign_in_sub: 'سجّل الدخول إلى حسابك',
   email: 'البريد الإلكتروني',
   send_otp: 'إرسال رمز التحقق',
+  next: 'التالي',
   sending: 'جارٍ الإرسال…',
   no_account: 'ليس لديك حساب؟',
   sign_up: 'إنشاء حساب',
@@ -435,6 +452,13 @@ const ar: T = {
   siyago_partner_sub: 'أدرج عقارك وابدأ الربح',
   cancel_booking_confirm: 'هل أنت متأكد من رغبتك في إلغاء هذا الحجز؟',
   browse_properties: 'تصفح العقارات',
+  full_name: 'الاسم الكامل',
+  continue_as_guest: 'المتابعة كضيف',
+  have_account_sign_in: 'لديك حساب؟ سجّل الدخول',
+  guest_booking_reference_msg: 'احتفظ برقم مرجع الحجز — يمكنك التسجيل في أي وقت لمتابعة هذه الرحلة في رحلاتي.',
+  guest_otp_intro: 'سنرسل لك رمزًا مكونًا من 6 أرقام عبر البريد الإلكتروني أو الهاتف للتأكد من هويتك قبل الحجز.',
+  verified_as: 'تم التحقق كـ',
+  edit_details: 'تعديل التفاصيل',
 };
 
 const am: T = {
@@ -450,6 +474,7 @@ const am: T = {
   sign_in_sub: 'ወደ መለያዎ ይግቡ',
   email: 'ኢሜይል አድራሻ',
   send_otp: 'OTP ይላኩ',
+  next: 'ቀጣይ',
   sending: 'እየላከ ነው…',
   no_account: 'መለያ የለዎትም?',
   sign_up: 'ምዝገባ',
@@ -577,6 +602,13 @@ const am: T = {
   siyago_partner_sub: 'ንብረትዎን ይዘርዝሩ እና ገቢ ማግኘት ይጀምሩ',
   cancel_booking_confirm: 'ይህን ቦታ ማስያዝ መሰረዝ ይፈልጋሉ?',
   browse_properties: 'ንብረቶችን ያስሱ',
+  full_name: 'ሙሉ ስም',
+  continue_as_guest: 'እንደ እንግዳ ይቀጥሉ',
+  have_account_sign_in: 'መለያ አለዎት? ይግቡ',
+  guest_booking_reference_msg: 'የቦታ ማስያዣ ቁጥርዎን ያስቀምጡ — ይህን ጉዞ በመርሐ ግብሬ ውስጥ ለመከታተል በማንኛውም ጊዜ ይመዝገቡ።',
+  guest_otp_intro: 'ከማስያዝዎ በፊት እርስዎ መሆንዎን ለማረጋገጥ የ6-አሃዝ ኮድ በኢሜይል ወይም በስልክ እንልክልዎታለን።',
+  verified_as: 'የተረጋገጠ እንደ',
+  edit_details: 'ዝርዝሮችን ያርትዑ',
 };
 
 const so: T = {
@@ -592,6 +624,7 @@ const so: T = {
   sign_in_sub: 'Gal koontadaada',
   email: 'Ciwaanka Iimeelka',
   send_otp: 'Dir OTP',
+  next: 'Xiga',
   sending: 'Waxaa la diraya…',
   no_account: 'Ma haysatid koonto?',
   sign_up: 'Diiwaan geli',
@@ -719,6 +752,13 @@ const so: T = {
   siyago_partner_sub: 'Liis geli hantidaada oo bilow inaad dakhli hesho',
   cancel_booking_confirm: 'Ma hubtaa inaad rabto inaad joojiso buugistan?',
   browse_properties: 'Baadh hantida',
+  full_name: 'Magaca oo dhamaystiran',
+  continue_as_guest: 'U sii wad sida marti',
+  have_account_sign_in: 'Koonto ma haysataa? Gal',
+  guest_booking_reference_msg: 'Kaydi lambarka tixraaca buugistaada — isdiiwaan geli goor kasta si aad ugu daydo safarkan Jadwalkayga.',
+  guest_otp_intro: 'Waxaan kuu soo diri doonaa koodh 6-lambar ah si aan u xaqiijino inaad tahay adiga ka hor buugsiga.',
+  verified_as: 'Waxaa lagu xaqiijiyay',
+  edit_details: 'Wax ka beddel faahfaahinta',
 };
 
 const ti: T = {
@@ -734,6 +774,7 @@ const ti: T = {
   sign_in_sub: 'ናብ ሕሳብካ እቶ',
   email: 'ኢሜይል ኣድራሻ',
   send_otp: 'OTP ስደድ',
+  next: 'ቀጻሊ',
   sending: 'ይሰደድ ኣሎ…',
   no_account: 'ሕሳብ የብልካን?',
   sign_up: 'ምዝገባ',
@@ -861,6 +902,13 @@ const ti: T = {
   siyago_partner_sub: 'ንብረትካ ዘርዝርን ኣታዊ ምርካብ ጀምር',
   cancel_booking_confirm: 'ነዚ ዕቑር እዚ ክትስርዞ ርግጸኛ ዲኻ?',
   browse_properties: 'ንብረታት ርአ',
+  full_name: 'ምሉእ ስም',
+  continue_as_guest: 'ከም ጋሻ ቀጽል',
+  have_account_sign_in: 'ሕሳብ ኣለካ? እቶ',
+  guest_booking_reference_msg: 'ቁጽሪ ምልክት ዕቑርካ ኣቐምጥ — ነዚ ጉዕዞ እዚ ኣብ ሰሌዳይ ንምክትታል ብዝኾነ እዋን ተመዝገብ።',
+  guest_otp_intro: 'ቅድሚ ምሓዝካ ንስኻ ምዃንካ ንምርግጋጽ ናይ 6-ቁፅሪ ኮድ ብኢመይል ወይ ብተሌፎን ክንሰደልካ ኢና።',
+  verified_as: 'ተረጋጊፁ ከም',
+  edit_details: 'ዝርዝራት ኣርትዕ',
 };
 
 const zh: T = {
@@ -876,6 +924,7 @@ const zh: T = {
   sign_in_sub: '登录您的账户',
   email: '电子邮箱',
   send_otp: '发送验证码',
+  next: '下一步',
   sending: '发送中…',
   no_account: '没有账号？',
   sign_up: '注册',
@@ -1003,6 +1052,13 @@ const zh: T = {
   siyago_partner_sub: '发布您的房源，开始赚钱',
   cancel_booking_confirm: '确定要取消此预订吗？',
   browse_properties: '浏览房源',
+  full_name: '姓名',
+  continue_as_guest: '以访客身份继续',
+  have_account_sign_in: '已有账号？登录',
+  guest_booking_reference_msg: '请保存您的预订参考号——您可以随时注册账号，以便在"我的行程"中跟踪此次旅行。',
+  guest_otp_intro: '预订前，我们会通过邮箱或手机向您发送6位验证码以确认身份。',
+  verified_as: '已验证为',
+  edit_details: '编辑信息',
 };
 
 export const translations: Record<Locale, T> = { en, ar, am, so, ti, zh };
