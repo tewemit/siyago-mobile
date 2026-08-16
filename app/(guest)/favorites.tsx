@@ -1,10 +1,11 @@
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { getFavorites, toggleFavorite } from '../../services/favorites';
 import { formatLocation, type Property } from '../../services/properties';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +24,8 @@ export default function FavoritesScreen() {
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [favorites, setFavorites] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,7 +74,7 @@ export default function FavoritesScreen() {
         </View>
         <View style={styles.emptyWrap}>
           <View style={styles.iconCircle}>
-            <Ionicons name="heart-outline" size={40} color={COLORS.primary} />
+            <Ionicons name="heart-outline" size={40} color={colors.primary} />
           </View>
           <Text style={styles.emptyTitle}>{t.favorites}</Text>
           <Text style={styles.emptySub}>Sign in to save and view your favorite stays</Text>
@@ -95,7 +98,7 @@ export default function FavoritesScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 60 }} size="large" color={COLORS.primary} />
+        <ActivityIndicator style={{ marginTop: 60 }} size="large" color={colors.primary} />
       ) : (
         <FlatList
           data={favorites}
@@ -104,12 +107,12 @@ export default function FavoritesScreen() {
           columnWrapperStyle={styles.gridRow}
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />
           }
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <View style={styles.iconCircle}>
-                <Ionicons name="bookmark-outline" size={40} color={COLORS.primary} />
+                <Ionicons name="bookmark-outline" size={40} color={colors.primary} />
               </View>
               <Text style={styles.emptyTitle}>{t.no_favorites}</Text>
               <Text style={styles.emptySub}>Tap the heart icon on any property to save it here.</Text>
@@ -127,7 +130,7 @@ export default function FavoritesScreen() {
               {item.thumbnail ? (
                 <Image source={{ uri: item.thumbnail }} style={styles.cardImage} />
               ) : (
-                <View style={[styles.cardImage, { backgroundColor: COLORS.primaryLight }]} />
+                <View style={[styles.cardImage, { backgroundColor: colors.primaryLight }]} />
               )}
               {item.rating != null && (
                 <View style={styles.ratingBadge}>
@@ -140,13 +143,13 @@ export default function FavoritesScreen() {
                 onPress={() => handleRemove(item.id)}
                 disabled={removingIds.has(item.id)}
               >
-                <Ionicons name="heart" size={16} color={COLORS.error} />
+                <Ionicons name="heart" size={16} color={colors.error} />
               </TouchableOpacity>
               <View style={styles.cardBody}>
                 <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
                 {formatLocation(item) ? (
                   <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={11} color={COLORS.textSecondary} />
+                    <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
                     <Text style={styles.cardCity} numberOfLines={1}>{formatLocation(item)}</Text>
                   </View>
                 ) : null}
@@ -163,8 +166,9 @@ export default function FavoritesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,19 +177,19 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
   },
-  heading: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary },
+  heading: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
   countBadge: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     borderRadius: RADIUS.full,
     paddingHorizontal: 10,
     paddingVertical: 2,
   },
-  countText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  countText: { fontSize: 12, fontWeight: '700', color: colors.primary },
 
   gridRow: { gap: 12 },
   card: {
     flex: 1,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     marginBottom: 12,
     overflow: 'hidden',
@@ -218,12 +222,12 @@ const styles = StyleSheet.create({
     ...SHADOW.sm,
   },
   cardBody: { padding: 10 },
-  cardName: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
+  cardName: { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 6 },
-  cardCity: { fontSize: 11, color: COLORS.textSecondary, flex: 1 },
+  cardCity: { fontSize: 11, color: colors.textSecondary, flex: 1 },
   cardPrice: {},
-  priceAmt: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-  priceNight: { fontSize: 11, color: COLORS.textSecondary },
+  priceAmt: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  priceNight: { fontSize: 11, color: colors.textSecondary },
 
   emptyWrap: {
     flex: 1,
@@ -237,19 +241,20 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
   },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  emptySub: { textAlign: 'center', color: COLORS.textMuted, lineHeight: 22, fontSize: 14 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  emptySub: { textAlign: 'center', color: colors.textMuted, lineHeight: 22, fontSize: 14 },
   primaryBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.full,
     paddingVertical: 14,
     paddingHorizontal: 40,
     marginTop: 8,
   },
   primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-});
+  });
+}

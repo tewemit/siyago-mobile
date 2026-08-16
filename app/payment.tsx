@@ -1,8 +1,9 @@
 import { useI18n } from '../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { createCheckout, getBookingByRef, getErrorMessage } from '../services/bookings';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import {
   Alert,
@@ -20,6 +21,8 @@ export default function PaymentScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [method, setMethod] = useState<Method>('CASH');
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,10 +53,10 @@ export default function PaymentScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topTitle}>{t.payment}</Text>
         <View style={{ width: 38 }} />
@@ -68,7 +71,7 @@ export default function PaymentScreen() {
           activeOpacity={0.85}
         >
           <View style={styles.optionIconWrap}>
-            <Ionicons name="cash-outline" size={22} color={COLORS.primary} />
+            <Ionicons name="cash-outline" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.optionTitle}>{t.pay_at_property}</Text>
@@ -77,7 +80,7 @@ export default function PaymentScreen() {
           <Ionicons
             name={method === 'CASH' ? 'radio-button-on' : 'radio-button-off'}
             size={20}
-            color={method === 'CASH' ? COLORS.primary : COLORS.textMuted}
+            color={method === 'CASH' ? colors.primary : colors.textMuted}
           />
         </TouchableOpacity>
 
@@ -87,7 +90,7 @@ export default function PaymentScreen() {
           activeOpacity={0.85}
         >
           <View style={styles.optionIconWrap}>
-            <Ionicons name="card-outline" size={22} color={COLORS.primary} />
+            <Ionicons name="card-outline" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.optionTitle}>{t.pay_with_card}</Text>
@@ -96,7 +99,7 @@ export default function PaymentScreen() {
           <Ionicons
             name={method === 'STRIPE' ? 'radio-button-on' : 'radio-button-off'}
             size={20}
-            color={method === 'STRIPE' ? COLORS.primary : COLORS.textMuted}
+            color={method === 'STRIPE' ? colors.primary : colors.textMuted}
           />
         </TouchableOpacity>
 
@@ -113,55 +116,56 @@ export default function PaymentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   backBtn: {
     width: 38,
     height: 38,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
+  topTitle: { fontWeight: '700', fontSize: 17, color: colors.textPrimary },
 
   body: { padding: 20 },
-  sub: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 20 },
+  sub: { fontSize: 14, color: colors.textSecondary, marginBottom: 20 },
 
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 16,
     marginBottom: 12,
   },
-  optionSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   optionIconWrap: {
     width: 42,
     height: 42,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  optionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  optionSub: { fontSize: 12, color: COLORS.textSecondary },
+  optionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  optionSub: { fontSize: 12, color: colors.textSecondary },
 
   btn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     height: 54,
     borderRadius: RADIUS.lg,
     justifyContent: 'center',
@@ -171,4 +175,5 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
+  });
+}

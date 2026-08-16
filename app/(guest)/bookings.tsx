@@ -1,9 +1,10 @@
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS, RADIUS, SHADOW, STATUS_COLOR } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { cancelBooking, getErrorMessage, getMyBookings, type Booking } from '../../services/bookings';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -30,6 +31,8 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 }
 
 function MiniCalendar({ bookedDates }: { bookedDates: string[] }) {
+  const { colors } = useTheme();
+  const calStyles = useMemo(() => createCalStyles(colors), [colors]);
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -61,11 +64,11 @@ function MiniCalendar({ bookedDates }: { bookedDates: string[] }) {
     <View style={calStyles.container}>
       <View style={calStyles.header}>
         <TouchableOpacity onPress={prevMonth} style={calStyles.navBtn}>
-          <Ionicons name="chevron-back" size={18} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={calStyles.monthTitle}>{MONTHS[month]} {year}</Text>
         <TouchableOpacity onPress={nextMonth} style={calStyles.navBtn}>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-forward" size={18} color={colors.textPrimary} />
         </TouchableOpacity>
       </View>
       <View style={calStyles.dayRow}>
@@ -100,6 +103,8 @@ export default function BookingsScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const { colors, statusColor } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -164,12 +169,12 @@ export default function BookingsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-            <Ionicons name="calendar-outline" size={36} color={COLORS.primary} />
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+            <Ionicons name="calendar-outline" size={36} color={colors.primary} />
           </View>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8, textAlign: 'center' }}>{t.bookings}</Text>
-          <Text style={{ fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', marginBottom: 28, lineHeight: 20 }}>Sign in to view and manage your bookings</Text>
-          <TouchableOpacity style={{ backgroundColor: COLORS.primary, borderRadius: RADIUS.full, paddingVertical: 14, paddingHorizontal: 40 }} onPress={() => router.push('/(auth)/sign-in')}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' }}>{t.bookings}</Text>
+          <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 28, lineHeight: 20 }}>Sign in to view and manage your bookings</Text>
+          <TouchableOpacity style={{ backgroundColor: colors.primary, borderRadius: RADIUS.full, paddingVertical: 14, paddingHorizontal: 40 }} onPress={() => router.push('/(auth)/sign-in')}>
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.sign_in}</Text>
           </TouchableOpacity>
         </View>
@@ -184,7 +189,7 @@ export default function BookingsScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 60 }} size="large" color={COLORS.primary} />
+        <ActivityIndicator style={{ marginTop: 60 }} size="large" color={colors.primary} />
       ) : (
         <FlatList
           data={bookings}
@@ -193,7 +198,7 @@ export default function BookingsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setRefreshing(true); load(); }}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
             />
           }
           ListHeaderComponent={
@@ -207,13 +212,13 @@ export default function BookingsScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <Ionicons name="calendar-outline" size={48} color={COLORS.textMuted} />
+              <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
               <Text style={styles.empty}>{t.no_bookings}</Text>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => {
-            const color = STATUS_COLOR[item.status] ?? COLORS.textSecondary;
+            const color = statusColor[item.status] ?? colors.textSecondary;
             return (
               <TouchableOpacity
                 style={styles.card}
@@ -225,14 +230,14 @@ export default function BookingsScreen() {
                 {item.property?.thumbnail ? (
                   <Image source={{ uri: item.property.thumbnail }} style={styles.cardThumb} />
                 ) : (
-                  <View style={[styles.cardThumb, { backgroundColor: COLORS.primaryLight }]} />
+                  <View style={[styles.cardThumb, { backgroundColor: colors.primaryLight }]} />
                 )}
                 <View style={styles.cardBody}>
                   <Text style={styles.cardName} numberOfLines={1}>
                     {item.property?.name ?? item.propertyId}
                   </Text>
                   <View style={styles.dateRow}>
-                    <Ionicons name="calendar-outline" size={12} color={COLORS.textSecondary} />
+                    <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
                     <Text style={styles.dateText}>{item.checkIn} → {item.checkOut}</Text>
                   </View>
                   {nightsBetween(item.checkIn, item.checkOut) > 0 && (
@@ -284,91 +289,95 @@ export default function BookingsScreen() {
   );
 }
 
-const calStyles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.card,
-    margin: 16,
-    borderRadius: RADIUS.lg,
-    padding: 16,
-    ...SHADOW.sm,
-  },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  navBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  monthTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-  dayRow: { flexDirection: 'row', marginBottom: 8 },
-  dayLabel: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', color: COLORS.textMuted },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: '14.28%', alignItems: 'center', paddingVertical: 2 },
-  dayCell: { width: 32, height: 32, borderRadius: RADIUS.full, justifyContent: 'center', alignItems: 'center' },
-  todayCell: { backgroundColor: COLORS.primaryLight },
-  bookedCell: { backgroundColor: COLORS.primary },
-  dayText: { fontSize: 13, color: COLORS.textPrimary },
-  todayText: { color: COLORS.primary, fontWeight: '700' },
-  bookedText: { color: '#fff', fontWeight: '700' },
-});
+function createCalStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      margin: 16,
+      borderRadius: RADIUS.lg,
+      padding: 16,
+      ...SHADOW.sm,
+    },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    navBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: RADIUS.full,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    monthTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+    dayRow: { flexDirection: 'row', marginBottom: 8 },
+    dayLabel: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', color: colors.textMuted },
+    grid: { flexDirection: 'row', flexWrap: 'wrap' },
+    cell: { width: '14.28%', alignItems: 'center', paddingVertical: 2 },
+    dayCell: { width: 32, height: 32, borderRadius: RADIUS.full, justifyContent: 'center', alignItems: 'center' },
+    todayCell: { backgroundColor: colors.primaryLight },
+    bookedCell: { backgroundColor: colors.primary },
+    dayText: { fontSize: 13, color: colors.textPrimary },
+    todayText: { color: colors.primary, fontWeight: '700' },
+    bookedText: { color: '#fff', fontWeight: '700' },
+  });
+}
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
-  heading: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
+    heading: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
 
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  sectionCount: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.primary,
-    backgroundColor: COLORS.primaryLight,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: RADIUS.full,
-  },
+    sectionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 20,
+      marginBottom: 12,
+    },
+    sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+    sectionCount: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.primary,
+      backgroundColor: colors.primaryLight,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: RADIUS.full,
+    },
 
-  card: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    marginHorizontal: 16,
-    marginBottom: 10,
-    overflow: 'hidden',
-    ...SHADOW.dark,
-  },
-  cardThumb: { width: 80, height: 90 },
-  cardBody: { flex: 1, padding: 12, justifyContent: 'center' },
-  cardName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
-  dateText: { fontSize: 12, color: COLORS.textSecondary },
-  nightsPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primaryLight,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginBottom: 4,
-  },
-  nightsPillText: { fontSize: 10, fontWeight: '700', color: COLORS.primary },
-  priceText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-  priceNight: { fontSize: 11, color: COLORS.textSecondary },
-  rightCol: { padding: 10, justifyContent: 'space-between', alignItems: 'flex-end' },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full },
-  badgeText: { fontSize: 10, fontWeight: '700' },
-  cancelBtn: { marginTop: 6 },
-  cancelText: { fontSize: 11, fontWeight: '600', color: COLORS.error },
-  payLinkText: { fontSize: 11, fontWeight: '600', color: COLORS.primary },
+    card: {
+      flexDirection: 'row',
+      backgroundColor: colors.card,
+      borderRadius: RADIUS.lg,
+      marginHorizontal: 16,
+      marginBottom: 10,
+      overflow: 'hidden',
+      ...SHADOW.dark,
+    },
+    cardThumb: { width: 80, height: 90 },
+    cardBody: { flex: 1, padding: 12, justifyContent: 'center' },
+    cardName: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+    dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
+    dateText: { fontSize: 12, color: colors.textSecondary },
+    nightsPill: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.primaryLight,
+      borderRadius: RADIUS.full,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      marginBottom: 4,
+    },
+    nightsPillText: { fontSize: 10, fontWeight: '700', color: colors.primary },
+    priceText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+    priceNight: { fontSize: 11, color: colors.textSecondary },
+    rightCol: { padding: 10, justifyContent: 'space-between', alignItems: 'flex-end' },
+    badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full },
+    badgeText: { fontSize: 10, fontWeight: '700' },
+    cancelBtn: { marginTop: 6 },
+    cancelText: { fontSize: 11, fontWeight: '600', color: colors.error },
+    payLinkText: { fontSize: 11, fontWeight: '600', color: colors.primary },
 
-  emptyWrap: { alignItems: 'center', marginTop: 48, gap: 12 },
-  empty: { fontSize: 14, color: COLORS.textMuted },
-});
+    emptyWrap: { alignItems: 'center', marginTop: 48, gap: 12 },
+    empty: { fontSize: 14, color: colors.textMuted },
+  });
+}

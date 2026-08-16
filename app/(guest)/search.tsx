@@ -1,11 +1,12 @@
 import { useI18n } from '../../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { browseProperties, formatLocation, searchPropertiesAdvanced, type Property } from '../../services/properties';
 import { getPropertyTypes, type MasterOption } from '../../services/master';
 import DateField, { toISODate } from '../../components/DateField';
 import Stepper from '../../components/Stepper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -22,6 +23,8 @@ import { Ionicons } from '@expo/vector-icons';
 export default function SearchScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const params = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(params.q ?? '');
   const [results, setResults] = useState<Property[]>([]);
@@ -83,11 +86,11 @@ export default function SearchScreen() {
 
       <View style={styles.searchRow}>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={COLORS.textMuted} />
+          <Ionicons name="search" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder={t.search_placeholder}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={handleSearch}
@@ -95,7 +98,7 @@ export default function SearchScreen() {
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')}>
-              <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -103,7 +106,7 @@ export default function SearchScreen() {
           style={[styles.filterToggleBtn, showFilters && styles.filterToggleBtnActive]}
           onPress={() => setShowFilters((v) => !v)}
         >
-          <Ionicons name="options" size={20} color={showFilters ? '#fff' : COLORS.primary} />
+          <Ionicons name="options" size={20} color={showFilters ? '#fff' : colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.goBtn} onPress={handleSearch}>
           <Ionicons name="search" size={20} color="#fff" />
@@ -141,7 +144,7 @@ export default function SearchScreen() {
       )}
 
       {isLoading && (
-        <ActivityIndicator style={{ marginTop: 60 }} size="large" color={COLORS.primary} />
+        <ActivityIndicator style={{ marginTop: 60 }} size="large" color={colors.primary} />
       )}
 
       {!isLoading && searched && (
@@ -151,7 +154,7 @@ export default function SearchScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
-              <Ionicons name="search-outline" size={48} color={COLORS.textMuted} />
+              <Ionicons name="search-outline" size={48} color={colors.textMuted} />
               <Text style={styles.empty}>{t.no_properties}</Text>
             </View>
           }
@@ -166,7 +169,7 @@ export default function SearchScreen() {
               {item.thumbnail ? (
                 <Image source={{ uri: item.thumbnail }} style={styles.cardImage} />
               ) : (
-                <View style={[styles.cardImage, { backgroundColor: COLORS.primaryLight }]} />
+                <View style={[styles.cardImage, { backgroundColor: colors.primaryLight }]} />
               )}
               {item.rating != null && (
                 <View style={styles.ratingBadge}>
@@ -178,7 +181,7 @@ export default function SearchScreen() {
                 <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
                 {formatLocation(item) ? (
                   <View style={styles.locationRow}>
-                    <Ionicons name="location-outline" size={12} color={COLORS.textSecondary} />
+                    <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
                     <Text style={styles.cardCity}>{formatLocation(item)}</Text>
                   </View>
                 ) : null}
@@ -187,7 +190,7 @@ export default function SearchScreen() {
                   <Text style={styles.priceNight}> {t.per_night}</Text>
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} style={{ marginRight: 12, alignSelf: 'center' }} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginRight: 12, alignSelf: 'center' }} />
             </TouchableOpacity>
           )}
         />
@@ -196,38 +199,39 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  heading: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
+  heading: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
 
   searchRow: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 8, gap: 8 },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     paddingHorizontal: 14,
     height: 50,
     gap: 8,
     ...SHADOW.dark,
   },
-  searchInput: { flex: 1, fontSize: 14, color: COLORS.textPrimary },
+  searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary },
   filterToggleBtn: {
     width: 50,
     height: 50,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     borderRadius: RADIUS.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  filterToggleBtnActive: { backgroundColor: COLORS.primary },
+  filterToggleBtnActive: { backgroundColor: colors.primary },
   goBtn: {
     width: 50,
     height: 50,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.lg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -238,7 +242,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 16,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     ...SHADOW.sm,
   },
@@ -248,17 +252,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
-  typeChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  typeChipText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+  typeChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  typeChipText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
   typeChipTextActive: { color: '#fff' },
 
   card: {
     flexDirection: 'row',
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     marginBottom: 10,
     overflow: 'hidden',
@@ -279,13 +283,14 @@ const styles = StyleSheet.create({
   },
   ratingBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   cardBody: { flex: 1, padding: 12, justifyContent: 'center' },
-  cardName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
+  cardName: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
-  cardCity: { fontSize: 12, color: COLORS.textSecondary },
+  cardCity: { fontSize: 12, color: colors.textSecondary },
   cardPrice: {},
-  priceAmt: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
-  priceNight: { fontSize: 11, color: COLORS.textSecondary },
+  priceAmt: { fontSize: 14, fontWeight: '700', color: colors.primary },
+  priceNight: { fontSize: 11, color: colors.textSecondary },
 
   emptyWrap: { alignItems: 'center', marginTop: 48, gap: 12 },
-  empty: { fontSize: 14, color: COLORS.textMuted },
-});
+  empty: { fontSize: 14, color: colors.textMuted },
+  });
+}

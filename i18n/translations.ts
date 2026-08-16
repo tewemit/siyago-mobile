@@ -159,6 +159,25 @@ export type T = {
   guest_otp_intro: string;
   verified_as: string;
   edit_details: string;
+  settings: string;
+  region: string;
+  change_region: string;
+  legal: string;
+  terms_conditions: string;
+  privacy_policy: string;
+  cookie_statement: string;
+  help_feedback: string;
+  help_support: string;
+  help_center: string;
+  share_feedback: string;
+  rate_app: string;
+  rate_app_unavailable: string;
+  app_version: string;
+  all_rights_reserved: string;
+  appearance: string;
+  change_appearance: string;
+  theme_light: string;
+  theme_navy: string;
 };
 
 const en: T = {
@@ -298,7 +317,7 @@ const en: T = {
   save_changes: 'Save Changes',
   saving: 'Saving…',
   profile_updated: 'Profile updated',
-  siyago_partner: 'SiyaGo Partner',
+  siyago_partner: 'Register your property',
   siyago_partner_sub: 'List your property and start earning',
   cancel_booking_confirm: 'Are you sure you want to cancel this booking?',
   browse_properties: 'Browse properties',
@@ -309,6 +328,25 @@ const en: T = {
   guest_otp_intro: "We'll text or email you a 6-digit code to confirm it's really you before booking.",
   verified_as: 'Verified as',
   edit_details: 'Edit details',
+  settings: 'Settings',
+  region: 'Region',
+  change_region: 'Change Region',
+  legal: 'Legal',
+  terms_conditions: 'Terms & Conditions',
+  privacy_policy: 'Privacy Policy',
+  cookie_statement: 'Cookie Statement',
+  help_feedback: 'Help & Feedback',
+  help_support: 'Help & Support',
+  help_center: 'Help Center',
+  share_feedback: 'Share Feedback',
+  rate_app: 'Rate Our App',
+  rate_app_unavailable: "SiyaGo isn't available on the app stores yet — check back soon!",
+  app_version: 'Version',
+  all_rights_reserved: 'All rights reserved.',
+  appearance: 'Appearance',
+  change_appearance: 'Change Appearance',
+  theme_light: 'Light',
+  theme_navy: 'Navy',
 };
 
 const ar: T = {
@@ -448,7 +486,7 @@ const ar: T = {
   save_changes: 'حفظ التغييرات',
   saving: 'جارٍ الحفظ…',
   profile_updated: 'تم تحديث الملف الشخصي',
-  siyago_partner: 'شريك سياجو',
+  siyago_partner: 'سجّل عقارك',
   siyago_partner_sub: 'أدرج عقارك وابدأ الربح',
   cancel_booking_confirm: 'هل أنت متأكد من رغبتك في إلغاء هذا الحجز؟',
   browse_properties: 'تصفح العقارات',
@@ -459,6 +497,25 @@ const ar: T = {
   guest_otp_intro: 'سنرسل لك رمزًا مكونًا من 6 أرقام عبر البريد الإلكتروني أو الهاتف للتأكد من هويتك قبل الحجز.',
   verified_as: 'تم التحقق كـ',
   edit_details: 'تعديل التفاصيل',
+  settings: 'الإعدادات',
+  region: 'المنطقة',
+  change_region: 'تغيير المنطقة',
+  legal: 'الشؤون القانونية',
+  terms_conditions: 'الشروط والأحكام',
+  privacy_policy: 'سياسة الخصوصية',
+  cookie_statement: 'بيان ملفات تعريف الارتباط',
+  help_feedback: 'المساعدة والملاحظات',
+  help_support: 'المساعدة والدعم',
+  help_center: 'مركز المساعدة',
+  share_feedback: 'شارك ملاحظاتك',
+  rate_app: 'قيّم تطبيقنا',
+  rate_app_unavailable: 'تطبيق سياجو غير متوفر بعد في متاجر التطبيقات — تحقق قريبًا!',
+  app_version: 'الإصدار',
+  all_rights_reserved: 'جميع الحقوق محفوظة.',
+  appearance: 'المظهر',
+  change_appearance: 'تغيير المظهر',
+  theme_light: 'فاتح',
+  theme_navy: 'كحلي',
 };
 
 const am: T = {
@@ -598,7 +655,7 @@ const am: T = {
   save_changes: 'ለውጦችን አስቀምጥ',
   saving: 'በማስቀመጥ ላይ…',
   profile_updated: 'መገለጫ ተዘምኗል',
-  siyago_partner: 'የሲያጎ አጋር',
+  siyago_partner: 'ንብረትዎን ይመዝገቡ',
   siyago_partner_sub: 'ንብረትዎን ይዘርዝሩ እና ገቢ ማግኘት ይጀምሩ',
   cancel_booking_confirm: 'ይህን ቦታ ማስያዝ መሰረዝ ይፈልጋሉ?',
   browse_properties: 'ንብረቶችን ያስሱ',
@@ -609,6 +666,25 @@ const am: T = {
   guest_otp_intro: 'ከማስያዝዎ በፊት እርስዎ መሆንዎን ለማረጋገጥ የ6-አሃዝ ኮድ በኢሜይል ወይም በስልክ እንልክልዎታለን።',
   verified_as: 'የተረጋገጠ እንደ',
   edit_details: 'ዝርዝሮችን ያርትዑ',
+  settings: 'ቅንብሮች',
+  region: 'ክልል',
+  change_region: 'ክልል ይቀይሩ',
+  legal: 'ህጋዊ',
+  terms_conditions: 'ውሎች እና ሁኔታዎች',
+  privacy_policy: 'የግላዊነት ፖሊሲ',
+  cookie_statement: 'የኩኪ መግለጫ',
+  help_feedback: 'እርዳታ እና አስተያየት',
+  help_support: 'እርዳታ እና ድጋፍ',
+  help_center: 'የእርዳታ ማዕከል',
+  share_feedback: 'አስተያየት ያጋሩ',
+  rate_app: 'መተግበሪያችንን ይገምግሙ',
+  rate_app_unavailable: 'ሲያጎ በአፕ መደብሮች ላይ ገና አይገኝም — በቅርቡ ይመልከቱ!',
+  app_version: 'ስሪት',
+  all_rights_reserved: 'መብቱ በህግ የተጠበቀ ነው።',
+  appearance: 'መልክ',
+  change_appearance: 'መልክ ይቀይሩ',
+  theme_light: 'ብሩህ',
+  theme_navy: 'ጨለማ ሰማያዊ',
 };
 
 const so: T = {
@@ -748,7 +824,7 @@ const so: T = {
   save_changes: 'Kaydi Isbeddellada',
   saving: 'Waa la kaydinayaa…',
   profile_updated: 'Profaylka waa la cusboonaysiiyay',
-  siyago_partner: 'Lammaanaha SiyaGo',
+  siyago_partner: 'Diiwaan geli hantidaada',
   siyago_partner_sub: 'Liis geli hantidaada oo bilow inaad dakhli hesho',
   cancel_booking_confirm: 'Ma hubtaa inaad rabto inaad joojiso buugistan?',
   browse_properties: 'Baadh hantida',
@@ -759,6 +835,25 @@ const so: T = {
   guest_otp_intro: 'Waxaan kuu soo diri doonaa koodh 6-lambar ah si aan u xaqiijino inaad tahay adiga ka hor buugsiga.',
   verified_as: 'Waxaa lagu xaqiijiyay',
   edit_details: 'Wax ka beddel faahfaahinta',
+  settings: 'Dejinta',
+  region: 'Gobolka',
+  change_region: 'Beddel Gobolka',
+  legal: 'Sharciga',
+  terms_conditions: 'Shuruudaha iyo Xaaladaha',
+  privacy_policy: 'Siyaasadda Sirta',
+  cookie_statement: 'Bayaanka Cookie-ga',
+  help_feedback: 'Caawimaad iyo Jawaab celin',
+  help_support: 'Caawimaad iyo Taageero',
+  help_center: 'Xarunta Caawimaadda',
+  share_feedback: 'La wadaag Jawaab celin',
+  rate_app: 'Qiimee Abka',
+  rate_app_unavailable: 'SiyaGo weli kuma jiro bakhaarrada aplikeeshanka — dib u eeg dhawaan!',
+  app_version: 'Nooca',
+  all_rights_reserved: 'Dhammaan xuquuqda way dhowran yihiin.',
+  appearance: 'Muuqaalka',
+  change_appearance: 'Beddel Muuqaalka',
+  theme_light: 'Iftiin',
+  theme_navy: 'Buluug Madow',
 };
 
 const ti: T = {
@@ -898,7 +993,7 @@ const ti: T = {
   save_changes: 'ለውጥታት ኣቐምጥ',
   saving: 'ይቕመጥ ኣሎ…',
   profile_updated: 'መገለጺ ተመሓይሹ',
-  siyago_partner: 'መሻርኽቲ ሲያጎ',
+  siyago_partner: 'ንብረትካ መዝግብ',
   siyago_partner_sub: 'ንብረትካ ዘርዝርን ኣታዊ ምርካብ ጀምር',
   cancel_booking_confirm: 'ነዚ ዕቑር እዚ ክትስርዞ ርግጸኛ ዲኻ?',
   browse_properties: 'ንብረታት ርአ',
@@ -909,6 +1004,25 @@ const ti: T = {
   guest_otp_intro: 'ቅድሚ ምሓዝካ ንስኻ ምዃንካ ንምርግጋጽ ናይ 6-ቁፅሪ ኮድ ብኢመይል ወይ ብተሌፎን ክንሰደልካ ኢና።',
   verified_as: 'ተረጋጊፁ ከም',
   edit_details: 'ዝርዝራት ኣርትዕ',
+  settings: 'ቅንብራት',
+  region: 'ዞባ',
+  change_region: 'ዞባ ቀይር',
+  legal: 'ሕጋዊ',
+  terms_conditions: 'ውዕላትን ኹነታትን',
+  privacy_policy: 'ፖሊሲ ግላዊነት',
+  cookie_statement: 'መግለጺ ኩኪ',
+  help_feedback: 'ሓገዝን ርእይቶን',
+  help_support: 'ሓገዝን ደገፍን',
+  help_center: 'ማእከል ሓገዝ',
+  share_feedback: 'ርእይቶ ኣካፍል',
+  rate_app: 'ነዚ መተግበሪ ገምግም',
+  rate_app_unavailable: 'ሲያጎ ገና ኣብ ኣፕ ስቶራት የለን — ቀልጢፍካ ተመልከት!',
+  app_version: 'ስሪት',
+  all_rights_reserved: 'ኩሉ መሰላት ዝተሓለወ እዩ።',
+  appearance: 'መልክዕ',
+  change_appearance: 'መልክዕ ቀይር',
+  theme_light: 'ብሩህ',
+  theme_navy: 'ጸሊም ሰማያዊ',
 };
 
 const zh: T = {
@@ -1048,7 +1162,7 @@ const zh: T = {
   save_changes: '保存更改',
   saving: '保存中…',
   profile_updated: '资料已更新',
-  siyago_partner: 'SiyaGo 合作伙伴',
+  siyago_partner: '注册您的房产',
   siyago_partner_sub: '发布您的房源，开始赚钱',
   cancel_booking_confirm: '确定要取消此预订吗？',
   browse_properties: '浏览房源',
@@ -1059,6 +1173,25 @@ const zh: T = {
   guest_otp_intro: '预订前，我们会通过邮箱或手机向您发送6位验证码以确认身份。',
   verified_as: '已验证为',
   edit_details: '编辑信息',
+  settings: '设置',
+  region: '地区',
+  change_region: '更改地区',
+  legal: '法律信息',
+  terms_conditions: '条款和条件',
+  privacy_policy: '隐私政策',
+  cookie_statement: 'Cookie 声明',
+  help_feedback: '帮助与反馈',
+  help_support: '帮助与支持',
+  help_center: '帮助中心',
+  share_feedback: '分享反馈',
+  rate_app: '为我们的应用评分',
+  rate_app_unavailable: 'SiyaGo 尚未上架应用商店 — 敬请期待！',
+  app_version: '版本',
+  all_rights_reserved: '版权所有。',
+  appearance: '外观',
+  change_appearance: '更改外观',
+  theme_light: '浅色',
+  theme_navy: '藏青色',
 };
 
 export const translations: Record<Locale, T> = { en, ar, am, so, ti, zh };

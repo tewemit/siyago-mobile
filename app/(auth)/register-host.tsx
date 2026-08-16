@@ -1,7 +1,9 @@
 import { useI18n } from '../../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { registerHost } from '../../services/auth';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -29,6 +31,8 @@ type FormValues = {
 export default function RegisterHostScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     control,
     handleSubmit,
@@ -69,11 +73,11 @@ export default function RegisterHostScreen() {
           rules={rules}
           render={({ field: { onChange, value, onBlur } }) => (
             <View style={[styles.inputWrapper, errors[name] && styles.inputWrapperError]}>
-              <Ionicons name={icon} size={18} color={COLORS.textMuted} />
+              <Ionicons name={icon} size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
                 placeholder={placeholder}
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
@@ -202,79 +206,81 @@ export default function RegisterHostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.primary },
-  container: { flexGrow: 1 },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.primary },
+    container: { flexGrow: 1 },
 
-  topPanel: {
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 36,
-    backgroundColor: COLORS.primary,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 56,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  brandName: { fontSize: 24, fontWeight: '800', color: '#fff' },
+    topPanel: {
+      alignItems: 'center',
+      paddingTop: 60,
+      paddingBottom: 36,
+      backgroundColor: colors.primary,
+    },
+    backBtn: {
+      position: 'absolute',
+      top: 56,
+      left: 20,
+      width: 40,
+      height: 40,
+      borderRadius: RADIUS.full,
+      backgroundColor: 'rgba(255,255,255,0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    logoCircle: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    brandName: { fontSize: 24, fontWeight: '800', color: '#fff' },
 
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    padding: 28,
-    paddingTop: 32,
-  },
-  heading: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
-  sub: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 24 },
+    card: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderTopLeftRadius: RADIUS.xl,
+      borderTopRightRadius: RADIUS.xl,
+      padding: 28,
+      paddingTop: 32,
+    },
+    heading: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
+    sub: { fontSize: 14, color: colors.textSecondary, marginBottom: 24 },
 
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 6 },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    height: 52,
-    gap: 10,
-    marginBottom: 4,
-  },
-  inputWrapperError: { borderColor: COLORS.error },
-  input: { flex: 1, fontSize: 15, color: COLORS.textPrimary },
-  error: { color: COLORS.error, fontSize: 12, marginBottom: 8 },
+    label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: RADIUS.md,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      paddingHorizontal: 14,
+      height: 52,
+      gap: 10,
+      marginBottom: 4,
+    },
+    inputWrapperError: { borderColor: colors.error },
+    input: { flex: 1, fontSize: 15, color: colors.textPrimary },
+    error: { color: colors.error, fontSize: 12, marginBottom: 8 },
 
-  btn: {
-    backgroundColor: COLORS.primary,
-    height: 54,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    ...SHADOW.sm,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    btn: {
+      backgroundColor: colors.primary,
+      height: 54,
+      borderRadius: RADIUS.lg,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 20,
+      ...SHADOW.sm,
+    },
+    btnDisabled: { opacity: 0.6 },
+    btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
-  linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, marginBottom: 12 },
-  linkText: { color: COLORS.textSecondary, fontSize: 14 },
-  link: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
-});
+    linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, marginBottom: 12 },
+    linkText: { color: colors.textSecondary, fontSize: 14 },
+    link: { color: colors.primary, fontWeight: '700', fontSize: 14 },
+  });
+}

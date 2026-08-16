@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { useI18n } from '../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
 import { usePathname, useRouter } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
  */
 export default function BottomBar() {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
@@ -46,7 +50,7 @@ export default function BottomBar() {
               <Ionicons
                 name={focused ? tab.activeIcon : tab.icon}
                 size={22}
-                color={focused ? COLORS.primary : COLORS.textMuted}
+                color={focused ? colors.primary : colors.textMuted}
               />
             </View>
             <Text style={[styles.label, focused && styles.labelActive]}>{tab.label}</Text>
@@ -57,35 +61,37 @@ export default function BottomBar() {
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.tabBar,
-    paddingTop: 8,
-    ...SHADOW.dark,
-  },
-  item: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 2,
-    paddingTop: 4,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-    color: COLORS.textMuted,
-  },
-  labelActive: {
-    color: COLORS.primary,
-  },
-  activeIcon: {
-    backgroundColor: COLORS.primaryLight,
-    borderRadius: RADIUS.full,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      backgroundColor: colors.tabBar,
+      paddingTop: 8,
+      ...SHADOW.dark,
+    },
+    item: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 2,
+      paddingTop: 4,
+    },
+    label: {
+      fontSize: 11,
+      fontWeight: '600',
+      marginTop: 2,
+      color: colors.textMuted,
+    },
+    labelActive: {
+      color: colors.primary,
+    },
+    activeIcon: {
+      backgroundColor: colors.primaryLight,
+      borderRadius: RADIUS.full,
+      width: 40,
+      height: 40,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+}

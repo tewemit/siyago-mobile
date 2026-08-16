@@ -1,7 +1,8 @@
-import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -23,6 +24,8 @@ import { Ionicons } from '@expo/vector-icons';
 export default function TwoFactorAuthScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [smsEnabled, setSmsEnabled] = useState(false);
 
@@ -38,7 +41,7 @@ export default function TwoFactorAuthScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topTitle}>Two-Factor Authentication</Text>
         <View style={{ width: 38 }} />
@@ -47,7 +50,7 @@ export default function TwoFactorAuthScreen() {
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <View style={styles.introCard}>
           <View style={styles.introIconWrap}>
-            <Ionicons name="shield-checkmark" size={24} color={COLORS.primary} />
+            <Ionicons name="shield-checkmark" size={24} color={colors.primary} />
           </View>
           <Text style={styles.introTitle}>Extra security on every sign-in</Text>
           <Text style={styles.introSub}>
@@ -59,7 +62,7 @@ export default function TwoFactorAuthScreen() {
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="mail-outline" size={18} color={COLORS.primary} />
+              <Ionicons name="mail-outline" size={18} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowLabel}>Email</Text>
@@ -68,14 +71,14 @@ export default function TwoFactorAuthScreen() {
             <Switch
               value={emailEnabled}
               onValueChange={handleToggleEmail}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
+              trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor="#fff"
             />
           </View>
 
           <View style={[styles.row, { borderBottomWidth: 0, opacity: 0.55 }]}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="chatbox-ellipses-outline" size={18} color={COLORS.primary} />
+              <Ionicons name="chatbox-ellipses-outline" size={18} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <View style={styles.smsLabelRow}>
@@ -90,7 +93,7 @@ export default function TwoFactorAuthScreen() {
               value={smsEnabled}
               onValueChange={setSmsEnabled}
               disabled
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
+              trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor="#fff"
             />
           </View>
@@ -104,8 +107,9 @@ export default function TwoFactorAuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -117,16 +121,16 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
+  topTitle: { fontWeight: '700', fontSize: 17, color: colors.textPrimary },
 
   body: { padding: 16, paddingBottom: 40 },
 
   introCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.xl,
     padding: 20,
     alignItems: 'center',
@@ -137,25 +141,25 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
   },
-  introTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 6, textAlign: 'center' },
-  introSub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 19 },
+  introTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, marginBottom: 6, textAlign: 'center' },
+  introSub: { fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 19 },
 
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 8,
     marginLeft: 4,
   },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     marginBottom: 16,
@@ -168,22 +172,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   rowIconWrap: {
     width: 34,
     height: 34,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rowLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  rowSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  rowLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  rowSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   smsLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   comingSoonBadge: {
-    backgroundColor: COLORS.accentLight,
-    color: COLORS.accentDark,
+    backgroundColor: colors.accentLight,
+    color: colors.accentDark,
     fontSize: 10,
     fontWeight: '700',
     paddingHorizontal: 8,
@@ -194,9 +198,10 @@ const styles = StyleSheet.create({
 
   footnote: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 12,
   },
-});
+  });
+}

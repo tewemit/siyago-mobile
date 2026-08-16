@@ -1,8 +1,9 @@
 import { useI18n } from '../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { submitReview } from '../services/reviews';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,6 +22,8 @@ export default function WriteReviewScreen() {
   const { propertyId, bookingId } = useLocalSearchParams<{ propertyId: string; bookingId?: string }>();
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -49,13 +52,13 @@ export default function WriteReviewScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: COLORS.background }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{t.write_a_review}</Text>
           <View style={{ width: 38 }} />
@@ -68,7 +71,7 @@ export default function WriteReviewScreen() {
                 <Ionicons
                   name={s <= rating ? 'star' : 'star-outline'}
                   size={40}
-                  color={COLORS.accent}
+                  color={colors.accent}
                   style={{ marginHorizontal: 4 }}
                 />
               </TouchableOpacity>
@@ -79,7 +82,7 @@ export default function WriteReviewScreen() {
           <TextInput
             style={styles.textArea}
             placeholder="Share how your stay was…"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={comment}
             onChangeText={setComment}
             multiline
@@ -101,44 +104,45 @@ export default function WriteReviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   backBtn: {
     width: 38,
     height: 38,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
+  topTitle: { fontWeight: '700', fontSize: 17, color: colors.textPrimary },
 
   body: { padding: 20 },
   starsRow: { flexDirection: 'row', justifyContent: 'center', marginVertical: 24 },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 8 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
   textArea: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderRadius: RADIUS.md,
     paddingHorizontal: 14,
     paddingVertical: 13,
     fontSize: 15,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     minHeight: 120,
   },
 
   btn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     height: 54,
     borderRadius: RADIUS.lg,
     justifyContent: 'center',
@@ -148,4 +152,5 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
+  });
+}

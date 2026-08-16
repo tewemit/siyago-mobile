@@ -1,8 +1,9 @@
 import { useI18n } from '../../context/I18nContext';
-import { COLORS, RADIUS, SHADOW, STATUS_COLOR } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { getBookingByRef, verifyEthSwitchPayment, type Booking } from '../../services/bookings';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
@@ -23,6 +24,8 @@ export default function BookingDetailsScreen() {
   const { ref } = useLocalSearchParams<{ ref: string }>();
   const router = useRouter();
   const { t } = useI18n();
+  const { colors, statusColor } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -86,7 +89,7 @@ export default function BookingDetailsScreen() {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -95,14 +98,14 @@ export default function BookingDetailsScreen() {
     return (
       <SafeAreaView style={styles.center}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={{ color: COLORS.textSecondary, marginTop: 80 }}>Booking not found.</Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 80 }}>Booking not found.</Text>
       </SafeAreaView>
     );
   }
 
-  const color = STATUS_COLOR[booking.status] ?? COLORS.textSecondary;
+  const color = statusColor[booking.status] ?? colors.textSecondary;
 
   function statusLabel(s: string) {
     const map: Record<string, string> = {
@@ -120,7 +123,7 @@ export default function BookingDetailsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topTitle}>{t.booking_details}</Text>
         <View style={{ width: 38 }} />
@@ -168,10 +171,12 @@ function Row({
   noBorder?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={[styles.row, noBorder && { borderBottomWidth: 0 }]}>
       <View style={styles.rowLabelWrap}>
-        {icon && <Ionicons name={icon} size={13} color={COLORS.primary} />}
+        {icon && <Ionicons name={icon} size={13} color={colors.primary} />}
         <Text style={styles.rowLabel}>{label}</Text>
       </View>
       <Text style={[styles.rowValue, bold && styles.rowBold, mono && styles.rowMono]}>
@@ -181,62 +186,64 @@ function Row({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: COLORS.card,
-    borderBottomWidth: 1,
-    borderColor: COLORS.border,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderColor: colors.border,
+    },
+    backBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: RADIUS.full,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    topTitle: { fontWeight: '700', fontSize: 17, color: colors.textPrimary },
 
-  body: { padding: 20 },
+    body: { padding: 20 },
 
-  statusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 14,
-    marginBottom: 20,
-  },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { fontWeight: '800', fontSize: 16 },
+    statusBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      borderRadius: RADIUS.lg,
+      paddingVertical: 14,
+      marginBottom: 20,
+    },
+    statusDot: { width: 8, height: 8, borderRadius: 4 },
+    statusText: { fontWeight: '800', fontSize: 16 },
 
-  infoCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    ...SHADOW.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  rowLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  rowLabel: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '500' },
-  rowValue: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600', maxWidth: '55%', textAlign: 'right' },
-  rowBold: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
-  rowMono: { fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace', fontSize: 12 },
-});
+    infoCard: {
+      backgroundColor: colors.card,
+      borderRadius: RADIUS.xl,
+      overflow: 'hidden',
+      ...SHADOW.sm,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    rowLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    rowLabel: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+    rowValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '600', maxWidth: '55%', textAlign: 'right' },
+    rowBold: { fontSize: 16, fontWeight: '800', color: colors.primary },
+    rowMono: { fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace', fontSize: 12 },
+  });
+}

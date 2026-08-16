@@ -1,6 +1,8 @@
 import { useI18n } from '../context/I18nContext';
 import { useAuth } from '../context/AuthContext';
-import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { useRegion } from '../context/RegionContext';
+import { useTheme } from '../context/ThemeContext';
+import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
 import {
   createBooking,
   getBookingByRef,
@@ -62,6 +64,9 @@ export default function BookingSummaryScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { user, isLoading: authLoading } = useAuth();
+  const { region } = useRegion();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [checkIn, setCheckIn] = useState<Date | null>(null);
@@ -76,6 +81,13 @@ export default function BookingSummaryScreen() {
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestCountry, setGuestCountry] = useState('Ethiopia');
+
+  // Prefill from the Region setting (Profile > Settings) once it loads from
+  // storage — only while the field still holds its untouched default, so we
+  // never clobber something the guest already typed.
+  useEffect(() => {
+    if (region && guestCountry === 'Ethiopia') setGuestCountry(region);
+  }, [region]);
   const [guestStep, setGuestStep] = useState<GuestStep>('form');
   const [guestOtpToken, setGuestOtpToken] = useState<string | null>(null);
   const [guestVerificationToken, setGuestVerificationToken] = useState<string | null>(null);
@@ -302,7 +314,7 @@ export default function BookingSummaryScreen() {
   if (isLoading || authLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -316,13 +328,13 @@ export default function BookingSummaryScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: COLORS.background }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>{t.booking_summary}</Text>
           <View style={{ width: 38 }} />
@@ -334,9 +346,9 @@ export default function BookingSummaryScreen() {
               style={styles.signInBanner}
               onPress={() => router.push({ pathname: '/(auth)/sign-in', params: { propertyId } })}
             >
-              <Ionicons name="person-circle-outline" size={18} color={COLORS.primary} />
+              <Ionicons name="person-circle-outline" size={18} color={colors.primary} />
               <Text style={styles.signInBannerText}>{t.have_account_sign_in}</Text>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+              <Ionicons name="chevron-forward" size={16} color={colors.primary} />
             </TouchableOpacity>
           )}
 
@@ -345,7 +357,7 @@ export default function BookingSummaryScreen() {
               <View style={styles.propertyCardInner}>
                 <Text style={styles.propName}>{property.name}</Text>
                 <View style={styles.propLocRow}>
-                  <Ionicons name="location-outline" size={12} color={COLORS.primary} />
+                  <Ionicons name="location-outline" size={12} color={colors.primary} />
                   <Text style={styles.propLoc}>{formatLocation(property)}</Text>
                 </View>
               </View>
@@ -382,7 +394,7 @@ export default function BookingSummaryScreen() {
                     <Ionicons
                       name={selected ? 'radio-button-on' : 'radio-button-off'}
                       size={18}
-                      color={selected ? COLORS.primary : COLORS.textMuted}
+                      color={selected ? colors.primary : colors.textMuted}
                       style={{ marginLeft: 10 }}
                     />
                   </TouchableOpacity>
@@ -414,7 +426,7 @@ export default function BookingSummaryScreen() {
                     <TextInput
                       style={[styles.guestInput, styles.guestInputHalf]}
                       placeholder={t.first_name}
-                      placeholderTextColor={COLORS.textMuted}
+                      placeholderTextColor={colors.textMuted}
                       value={guestFirstName}
                       onChangeText={setGuestFirstName}
                       autoCapitalize="words"
@@ -422,7 +434,7 @@ export default function BookingSummaryScreen() {
                     <TextInput
                       style={[styles.guestInput, styles.guestInputHalf]}
                       placeholder={t.last_name}
-                      placeholderTextColor={COLORS.textMuted}
+                      placeholderTextColor={colors.textMuted}
                       value={guestLastName}
                       onChangeText={setGuestLastName}
                       autoCapitalize="words"
@@ -431,7 +443,7 @@ export default function BookingSummaryScreen() {
                   <TextInput
                     style={styles.guestInput}
                     placeholder={t.email}
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={guestEmail}
                     onChangeText={setGuestEmail}
                     keyboardType="email-address"
@@ -441,7 +453,7 @@ export default function BookingSummaryScreen() {
                   <TextInput
                     style={styles.guestInput}
                     placeholder={t.phone_number}
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={guestPhone}
                     onChangeText={setGuestPhone}
                     keyboardType="phone-pad"
@@ -449,7 +461,7 @@ export default function BookingSummaryScreen() {
                   <TextInput
                     style={[styles.guestInput, { marginBottom: 0 }]}
                     placeholder={t.country}
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={guestCountry}
                     onChangeText={setGuestCountry}
                     autoCapitalize="words"
@@ -499,7 +511,7 @@ export default function BookingSummaryScreen() {
 
               {guestStep === 'verified' && (
                 <View style={[styles.guestFormCard, styles.guestVerifiedCard]}>
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                   <Text style={styles.guestVerifiedText}>
                     {t.verified_as} {guestEmail.trim().toLowerCase()}
                   </Text>
@@ -522,7 +534,7 @@ export default function BookingSummaryScreen() {
                 activeOpacity={0.85}
               >
                 <View style={styles.paymentIconWrap}>
-                  <Ionicons name={paymentMethodIcon(method.gateway)} size={20} color={COLORS.primary} />
+                  <Ionicons name={paymentMethodIcon(method.gateway)} size={20} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.paymentTitle}>{method.name}</Text>
@@ -533,7 +545,7 @@ export default function BookingSummaryScreen() {
                 <Ionicons
                   name={selected ? 'radio-button-on' : 'radio-button-off'}
                   size={18}
-                  color={selected ? COLORS.primary : COLORS.textMuted}
+                  color={selected ? colors.primary : colors.textMuted}
                 />
               </TouchableOpacity>
             );
@@ -566,8 +578,9 @@ export default function BookingSummaryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 
   topBar: {
     flexDirection: 'row',
@@ -575,24 +588,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   backBtn: {
     width: 38,
     height: 38,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
+  topTitle: { fontWeight: '700', fontSize: 17, color: colors.textPrimary },
 
   body: { padding: 20, gap: 4 },
 
   propertyCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     padding: 16,
     marginBottom: 20,
@@ -602,35 +615,35 @@ const styles = StyleSheet.create({
     ...SHADOW.sm,
   },
   propertyCardInner: { flex: 1, marginRight: 12 },
-  propName: { fontWeight: '700', fontSize: 15, color: COLORS.textPrimary, marginBottom: 4 },
+  propName: { fontWeight: '700', fontSize: 15, color: colors.textPrimary, marginBottom: 4 },
   propLocRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  propLoc: { color: COLORS.textSecondary, fontSize: 12 },
+  propLoc: { color: colors.textSecondary, fontSize: 12 },
   propPriceCol: { alignItems: 'flex-end' },
-  propPriceAmt: { fontWeight: '800', fontSize: 15, color: COLORS.primary },
-  propPriceNight: { fontSize: 11, color: COLORS.textSecondary },
+  propPriceAmt: { fontWeight: '800', fontSize: 15, color: colors.primary },
+  propPriceNight: { fontSize: 11, color: colors.textSecondary },
 
   roomSection: { marginBottom: 16 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 8 },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
   roomOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 12,
     marginBottom: 8,
   },
-  roomOptionSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
-  roomName: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  roomCapacity: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  roomRate: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-  noRoomsText: { color: COLORS.textSecondary, fontSize: 13, marginBottom: 16 },
+  roomOptionSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+  roomName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  roomCapacity: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  roomRate: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  noRoomsText: { color: colors.textSecondary, fontSize: 13, marginBottom: 16 },
 
   dateRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
 
   guestsCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     paddingHorizontal: 14,
     marginBottom: 20,
@@ -641,37 +654,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     borderRadius: RADIUS.lg,
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 16,
   },
-  signInBannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  signInBannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.primary },
 
   guestFormCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     padding: 14,
     marginBottom: 20,
     ...SHADOW.sm,
   },
   guestInput: {
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderRadius: RADIUS.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 10,
   },
-  guestIntroText: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 18, marginBottom: 12 },
+  guestIntroText: { fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 12 },
   guestNameRow: { flexDirection: 'row', gap: 10 },
   guestInputHalf: { flex: 1 },
-  emailText: { fontWeight: '700', color: COLORS.primary },
-  demoOtpText: { fontSize: 12, fontWeight: '700', color: COLORS.accent, marginBottom: 10 },
+  emailText: { fontWeight: '700', color: colors.primary },
+  demoOtpText: { fontSize: 12, fontWeight: '700', color: colors.accent, marginBottom: 10 },
 
   otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 16 },
   otpCell: {
@@ -679,59 +692,59 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     textAlign: 'center',
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
   },
-  otpCellFilled: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  otpCellFilled: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   otpFooterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  guestLinkText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
-  guestLinkTextDisabled: { color: COLORS.textMuted },
+  guestLinkText: { fontSize: 12, fontWeight: '700', color: colors.primary },
+  guestLinkTextDisabled: { color: colors.textMuted },
 
   guestVerifiedCard: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  guestVerifiedText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
+  guestVerifiedText: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.textPrimary },
 
   paymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.lg,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 10,
   },
-  paymentOptionSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  paymentOptionSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   paymentIconWrap: {
     width: 38,
     height: 38,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paymentTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  paymentSub: { fontSize: 11, color: COLORS.textSecondary },
+  paymentTitle: { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  paymentSub: { fontSize: 11, color: colors.textSecondary },
 
   totalCard: {
-    backgroundColor: COLORS.backgroundAlt,
+    backgroundColor: colors.backgroundAlt,
     borderRadius: RADIUS.lg,
     padding: 14,
     marginBottom: 16,
     marginTop: 8,
   },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 12, color: COLORS.textSecondary },
-  totalValue: { fontSize: 12, color: COLORS.textSecondary },
-  totalLabelBold: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  totalValueBold: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
+  totalLabel: { fontSize: 12, color: colors.textSecondary },
+  totalValue: { fontSize: 12, color: colors.textSecondary },
+  totalLabelBold: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  totalValueBold: { fontSize: 16, fontWeight: '800', color: colors.primary },
 
   btn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     height: 54,
     borderRadius: RADIUS.lg,
     justifyContent: 'center',
@@ -741,4 +754,5 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
+  });
+}

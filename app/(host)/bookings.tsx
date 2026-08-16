@@ -1,4 +1,6 @@
-import { COLORS, RADIUS, SHADOW, STATUS_COLOR } from '../../constants/theme';
+import { useMemo } from 'react';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { getHostBookings, type Booking } from '../../services/bookings';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,6 +17,8 @@ import {
 
 export default function HostBookingsScreen() {
   const router = useRouter();
+  const { colors, statusColor } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,7 +40,7 @@ export default function HostBookingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={COLORS.primary} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
       ) : (
         <FlatList
           data={bookings}
@@ -46,14 +50,14 @@ export default function HostBookingsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setRefreshing(true); load(); }}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
             />
           }
           ListEmptyComponent={
             <Text style={styles.empty}>No bookings yet.</Text>
           }
           renderItem={({ item }) => {
-            const color = STATUS_COLOR[item.status] ?? COLORS.textSecondary;
+            const color = statusColor[item.status] ?? colors.textSecondary;
             return (
               <TouchableOpacity
                 style={styles.card}
@@ -88,26 +92,28 @@ export default function HostBookingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    padding: 14,
-    marginBottom: 12,
-    ...SHADOW.dark,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  ref: { color: COLORS.textMuted, fontSize: 12 },
-  badge: { borderRadius: RADIUS.sm, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  name: { fontWeight: '700', fontSize: 15, marginBottom: 2, color: COLORS.textPrimary },
-  dates: { color: COLORS.textSecondary, fontSize: 13, marginBottom: 4 },
-  amount: { fontWeight: '600', color: COLORS.primary },
-  empty: { textAlign: 'center', color: COLORS.textMuted, marginTop: 40 },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: RADIUS.lg,
+      padding: 14,
+      marginBottom: 12,
+      ...SHADOW.dark,
+    },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    ref: { color: colors.textMuted, fontSize: 12 },
+    badge: { borderRadius: RADIUS.sm, paddingHorizontal: 8, paddingVertical: 3 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    name: { fontWeight: '700', fontSize: 15, marginBottom: 2, color: colors.textPrimary },
+    dates: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
+    amount: { fontWeight: '600', color: colors.primary },
+    empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
+  });
+}

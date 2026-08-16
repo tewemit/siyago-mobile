@@ -1,9 +1,10 @@
 import { useI18n } from '../../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { login } from '../../services/auth';
 import { setPendingLogin } from '../../services/otpSession';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -24,6 +25,8 @@ type FormValues = { email: string; password: string };
 export default function SignInScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPass, setShowPass] = useState(false);
   const {
     control,
@@ -77,11 +80,11 @@ export default function SignInScreen() {
             }}
             render={({ field: { onChange, value, onBlur } }) => (
               <View style={[styles.inputWrapper, errors.email && styles.inputWrapperError]}>
-                <Ionicons name="mail-outline" size={18} color={COLORS.textMuted} />
+                <Ionicons name="mail-outline" size={18} color={colors.textMuted} />
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -101,11 +104,11 @@ export default function SignInScreen() {
             rules={{ required: t.required, minLength: { value: 6, message: 'Min 6 characters' } }}
             render={({ field: { onChange, value, onBlur } }) => (
               <View style={[styles.inputWrapper, errors.password && styles.inputWrapperError]}>
-                <Ionicons name="lock-closed-outline" size={18} color={COLORS.textMuted} />
+                <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPass}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -117,7 +120,7 @@ export default function SignInScreen() {
                   <Ionicons
                     name={showPass ? 'eye-off-outline' : 'eye-outline'}
                     size={18}
-                    color={COLORS.textMuted}
+                    color={colors.textMuted}
                   />
                 </TouchableOpacity>
               </View>
@@ -151,15 +154,16 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.primary },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.primary },
   container: { flexGrow: 1 },
 
   topPanel: {
     alignItems: 'center',
     paddingTop: 72,
     paddingBottom: 40,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     position: 'relative',
   },
   backBtn: {
@@ -184,34 +188,34 @@ const styles = StyleSheet.create({
 
   card: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.background,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     padding: 28,
     paddingTop: 32,
   },
-  heading: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 6 },
-  sub: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 28 },
+  heading: { fontSize: 24, fontWeight: '800', color: colors.textPrimary, marginBottom: 6 },
+  sub: { fontSize: 14, color: colors.textSecondary, marginBottom: 28 },
 
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 8 },
+  label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingHorizontal: 14,
     height: 52,
     gap: 10,
     marginBottom: 4,
   },
-  inputWrapperError: { borderColor: COLORS.error },
-  input: { flex: 1, fontSize: 15, color: COLORS.textPrimary },
-  error: { color: COLORS.error, fontSize: 12, marginBottom: 12 },
+  inputWrapperError: { borderColor: colors.error },
+  input: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  error: { color: colors.error, fontSize: 12, marginBottom: 12 },
 
   btn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     height: 54,
     borderRadius: RADIUS.lg,
     justifyContent: 'center',
@@ -223,8 +227,9 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16, letterSpacing: 0.3 },
 
   linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  linkText: { color: COLORS.textSecondary, fontSize: 14 },
-  link: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
+  linkText: { color: colors.textSecondary, fontSize: 14 },
+  link: { color: colors.primary, fontWeight: '700', fontSize: 14 },
   skipRow: { alignItems: 'center', marginTop: 16 },
-  skipText: { color: COLORS.textMuted, fontSize: 13 },
-});
+  skipText: { color: colors.textMuted, fontSize: 13 },
+  });
+}

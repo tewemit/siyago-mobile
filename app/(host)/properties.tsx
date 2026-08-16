@@ -1,4 +1,6 @@
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { useMemo } from 'react';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { getHostProperties, type Property } from '../../services/properties';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -16,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function HostPropertiesScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,7 +41,7 @@ export default function HostPropertiesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={COLORS.primary} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
       ) : (
         <FlatList
           data={properties}
@@ -47,7 +51,7 @@ export default function HostPropertiesScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setRefreshing(true); load(); }}
-              tintColor={COLORS.primary}
+              tintColor={colors.primary}
             />
           }
           ListEmptyComponent={
@@ -70,7 +74,7 @@ export default function HostPropertiesScreen() {
                     : 'Rates managed on the web dashboard'}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         />
@@ -79,20 +83,22 @@ export default function HostPropertiesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    padding: 14,
-    marginBottom: 12,
-    ...SHADOW.dark,
-  },
-  name: { fontWeight: '700', fontSize: 15, marginBottom: 2, color: COLORS.textPrimary },
-  location: { color: COLORS.textSecondary, fontSize: 13, marginBottom: 4 },
-  price: { fontWeight: '600', color: COLORS.primary },
-  empty: { textAlign: 'center', color: COLORS.textMuted, marginTop: 40 },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: colors.card,
+      borderRadius: RADIUS.lg,
+      padding: 14,
+      marginBottom: 12,
+      ...SHADOW.dark,
+    },
+    name: { fontWeight: '700', fontSize: 15, marginBottom: 2, color: colors.textPrimary },
+    location: { color: colors.textSecondary, fontSize: 13, marginBottom: 4 },
+    price: { fontWeight: '600', color: colors.primary },
+    empty: { textAlign: 'center', color: colors.textMuted, marginTop: 40 },
+  });
+}

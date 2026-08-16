@@ -1,10 +1,11 @@
 import { useI18n } from '../../context/I18nContext';
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { login, verifyOtp } from '../../services/auth';
 import { clearPendingLogin, getPendingLogin } from '../../services/otpSession';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -27,6 +28,8 @@ export default function OtpScreen() {
   const router = useRouter();
   const { refresh } = useAuth();
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [token, setToken] = useState(initialToken);
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
@@ -161,85 +164,87 @@ export default function OtpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.primary },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.primary },
 
-  topPanel: {
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 36,
-    backgroundColor: COLORS.primary,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 56,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  logo: { width: 90, height: 90, marginBottom: 12 },
-  brandName: { fontSize: 24, fontWeight: '800', color: '#fff' },
+    topPanel: {
+      alignItems: 'center',
+      paddingTop: 60,
+      paddingBottom: 36,
+      backgroundColor: colors.primary,
+    },
+    backBtn: {
+      position: 'absolute',
+      top: 56,
+      left: 20,
+      width: 40,
+      height: 40,
+      borderRadius: RADIUS.full,
+      backgroundColor: 'rgba(255,255,255,0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    logoCircle: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    logo: { width: 90, height: 90, marginBottom: 12 },
+    brandName: { fontSize: 24, fontWeight: '800', color: '#fff' },
 
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    padding: 28,
-    paddingTop: 36,
-  },
-  heading: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 8 },
-  sub: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22, marginBottom: 32 },
-  emailText: { fontWeight: '700', color: COLORS.primary },
+    card: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderTopLeftRadius: RADIUS.xl,
+      borderTopRightRadius: RADIUS.xl,
+      padding: 28,
+      paddingTop: 36,
+    },
+    heading: { fontSize: 24, fontWeight: '800', color: colors.textPrimary, marginBottom: 8 },
+    sub: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 32 },
+    emailText: { fontWeight: '700', color: colors.primary },
 
-  otpRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 36,
-  },
-  cell: {
-    width: 48,
-    height: 56,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
-    textAlign: 'center',
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  cellFilled: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryLight,
-  },
+    otpRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 10,
+      marginBottom: 36,
+    },
+    cell: {
+      width: 48,
+      height: 56,
+      borderRadius: RADIUS.md,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.card,
+      textAlign: 'center',
+      fontSize: 22,
+      fontWeight: '700',
+      color: colors.textPrimary,
+    },
+    cellFilled: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+    },
 
-  btn: {
-    backgroundColor: COLORS.primary,
-    height: 54,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOW.sm,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    btn: {
+      backgroundColor: colors.primary,
+      height: 54,
+      borderRadius: RADIUS.lg,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...SHADOW.sm,
+    },
+    btnDisabled: { opacity: 0.6 },
+    btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
-  resendRow: { alignItems: 'center', marginTop: 20 },
-  resendText: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },
-  resendTextDisabled: { color: COLORS.textMuted },
-});
+    resendRow: { alignItems: 'center', marginTop: 20 },
+    resendText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
+    resendTextDisabled: { color: colors.textMuted },
+  });
+}

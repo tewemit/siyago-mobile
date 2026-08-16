@@ -11,4 +11,9 @@ export const API_HOST =
 // All siyago-api routes are mounted under /api/v1
 export const API_URL = `${API_HOST}/api/v1`;
 
+// The marketing/web app — used for legal pages (Terms, Privacy) and the
+// Help Center. Set EXPO_PUBLIC_WEBSITE_URL for a release build; matches
+// siyago-ui's own local default of localhost:3000 otherwise.
+export const WEBSITE_URL = process.env.EXPO_PUBLIC_WEBSITE_URL ?? 'http://localhost:3000';
+
 export const APP_NAME = 'Siyago';

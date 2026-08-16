@@ -1,6 +1,7 @@
-import { COLORS, RADIUS } from '../constants/theme';
+import { RADIUS, type ThemeColors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -33,6 +34,8 @@ export default function DateField({
   minimumDate?: Date;
   placeholder?: string;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [show, setShow] = useState(false);
   const [draft, setDraft] = useState(value ?? minimumDate ?? new Date());
 
@@ -53,14 +56,14 @@ export default function DateField({
   return (
     <View style={styles.wrap}>
       <View style={styles.labelRow}>
-        <Ionicons name={icon} size={14} color={COLORS.primary} />
+        <Ionicons name={icon} size={14} color={colors.primary} />
         <Text style={styles.label}>{label}</Text>
       </View>
       <TouchableOpacity style={styles.input} onPress={openPicker} activeOpacity={0.7}>
         <Text style={value ? styles.valueText : styles.placeholderText}>
           {value ? formatDate(value) : placeholder}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color={COLORS.textMuted} />
+        <Ionicons name="calendar-outline" size={18} color={colors.textMuted} />
       </TouchableOpacity>
 
       {show && Platform.OS === 'android' && (
@@ -100,38 +103,40 @@ export default function DateField({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  label: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
-  input: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.card,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-  },
-  valueText: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600' },
-  placeholderText: { fontSize: 14, color: COLORS.textMuted },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    wrap: { flex: 1 },
+    labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+    label: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
+    input: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.card,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: 14,
+      paddingVertical: 13,
+    },
+    valueText: { fontSize: 14, color: colors.textPrimary, fontWeight: '600' },
+    placeholderText: { fontSize: 14, color: colors.textMuted },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: {
-    backgroundColor: COLORS.card,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    padding: 20,
-    paddingBottom: 36,
-  },
-  doneBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  doneBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-});
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    modalSheet: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: RADIUS.xl,
+      borderTopRightRadius: RADIUS.xl,
+      padding: 20,
+      paddingBottom: 36,
+    },
+    doneBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: RADIUS.lg,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    doneBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  });
+}

@@ -1,11 +1,17 @@
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS, RADIUS, SHADOW } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
+// LIGHT_COLORS (not the reactive `colors`) is used deliberately for the
+// floating hero buttons and their icons below — those buttons keep a fixed
+// near-white circular background regardless of theme (they sit on top of a
+// photo, not the page), so their icon color must stay fixed too instead of
+// going near-invisible-white-on-white in Navy mode.
+import { LIGHT_COLORS, RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { formatLocation, getPropertyById, type Property } from '../../services/properties';
 import { getFavoriteStatus, toggleFavorite } from '../../services/favorites';
 import { getPropertyReviews, getReviewEligibility, type Review, type ReviewEligibility } from '../../services/reviews';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -44,6 +50,8 @@ export default function PropertyDetailScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { width } = useWindowDimensions();
   const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +108,7 @@ export default function PropertyDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -109,9 +117,9 @@ export default function PropertyDetailScreen() {
     return (
       <SafeAreaView style={styles.center}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={22} color={LIGHT_COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={{ color: COLORS.textSecondary, marginTop: 80 }}>Property not found.</Text>
+        <Text style={{ color: colors.textSecondary, marginTop: 80 }}>Property not found.</Text>
       </SafeAreaView>
     );
   }
@@ -150,7 +158,7 @@ export default function PropertyDetailScreen() {
           ) : heroImages[0] ? (
             <Image source={{ uri: heroImages[0] }} style={styles.hero} />
           ) : (
-            <View style={[styles.hero, { backgroundColor: COLORS.primaryLight }]} />
+            <View style={[styles.hero, { backgroundColor: colors.primaryLight }]} />
           )}
           <View style={styles.heroOverlay} pointerEvents="none" />
 
@@ -166,16 +174,16 @@ export default function PropertyDetailScreen() {
           )}
 
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={20} color={LIGHT_COLORS.textPrimary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.optionsBtn} onPress={handleShare}>
-            <Ionicons name="ellipsis-horizontal" size={20} color={COLORS.textPrimary} />
+            <Ionicons name="ellipsis-horizontal" size={20} color={LIGHT_COLORS.textPrimary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.heartBtn} onPress={handleToggleLike}>
             <Ionicons
               name={liked ? 'heart' : 'heart-outline'}
               size={20}
-              color={liked ? COLORS.error : COLORS.textPrimary}
+              color={liked ? LIGHT_COLORS.error : LIGHT_COLORS.textPrimary}
             />
           </TouchableOpacity>
         </View>
@@ -194,7 +202,7 @@ export default function PropertyDetailScreen() {
 
           {/* Location */}
           <View style={styles.locationRow}>
-            <Ionicons name="location" size={14} color={COLORS.primary} />
+            <Ionicons name="location" size={14} color={colors.primary} />
             <Text style={styles.locationText}>
               {property.address}, {property.city}, {property.country}
             </Text>
@@ -208,7 +216,7 @@ export default function PropertyDetailScreen() {
                   key={s}
                   name="star"
                   size={14}
-                  color={s <= Math.round(avgRating) ? COLORS.accent : COLORS.border}
+                  color={s <= Math.round(avgRating) ? colors.accent : colors.border}
                 />
               ))}
               <Text style={styles.ratingDetailText}>
@@ -255,7 +263,7 @@ export default function PropertyDetailScreen() {
                 facilities.map((f) => (
                   <View key={f} style={styles.amenityGridItem}>
                     <View style={styles.amenityGridIconWrap}>
-                      <Ionicons name={facilityIcon(f)} size={16} color={COLORS.primary} />
+                      <Ionicons name={facilityIcon(f)} size={16} color={colors.primary} />
                     </View>
                     <Text style={styles.amenityGridLabel} numberOfLines={1}>{f}</Text>
                   </View>
@@ -300,7 +308,7 @@ export default function PropertyDetailScreen() {
                             key={s}
                             name="star"
                             size={12}
-                            color={s <= r.rating ? COLORS.accent : COLORS.border}
+                            color={s <= r.rating ? colors.accent : colors.border}
                           />
                         ))}
                       </View>
@@ -337,6 +345,8 @@ export default function PropertyDetailScreen() {
 }
 
 function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <TouchableOpacity style={[styles.tabBtn, active && styles.tabBtnActive]} onPress={onPress} activeOpacity={0.8}>
       <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>{label}</Text>
@@ -344,9 +354,10 @@ function TabButton({ label, active, onPress }: { label: string; active: boolean;
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.card },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.card },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 
   heroWrapper: { position: 'relative', height: 300 },
   hero: { width: '100%', height: 300 },
@@ -419,20 +430,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
   },
-  name: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary, flex: 1, marginRight: 8 },
+  name: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, flex: 1, marginRight: 8 },
   priceCol: { alignItems: 'flex-end' },
-  priceAmount: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
-  priceNight: { fontSize: 11, color: COLORS.textSecondary },
+  priceAmount: { fontSize: 18, fontWeight: '800', color: colors.primary },
+  priceNight: { fontSize: 11, color: colors.textSecondary },
 
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
-  locationText: { fontSize: 13, color: COLORS.textSecondary, flex: 1 },
+  locationText: { fontSize: 13, color: colors.textSecondary, flex: 1 },
 
   ratingDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 16 },
-  ratingDetailText: { fontSize: 13, color: COLORS.textSecondary, marginLeft: 4 },
+  ratingDetailText: { fontSize: 13, color: colors.textSecondary, marginLeft: 4 },
 
   tabRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.backgroundAlt,
+    backgroundColor: colors.backgroundAlt,
     borderRadius: RADIUS.full,
     padding: 4,
     marginBottom: 16,
@@ -444,15 +455,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabBtnActive: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     ...SHADOW.sm,
   },
-  tabBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
-  tabBtnTextActive: { color: COLORS.primary },
+  tabBtnText: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+  tabBtnTextActive: { color: colors.primary },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginTop: 4, marginBottom: 8 },
-  descText: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
-  readMore: { fontSize: 13, color: COLORS.primary, fontWeight: '600', marginTop: 6 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginTop: 4, marginBottom: 8 },
+  descText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
+  readMore: { fontSize: 13, color: colors.primary, fontWeight: '600', marginTop: 6 },
 
   amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   amenityGridItem: {
@@ -460,7 +471,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: COLORS.backgroundAlt,
+    backgroundColor: colors.backgroundAlt,
     borderRadius: RADIUS.md,
     padding: 10,
   },
@@ -468,11 +479,11 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  amenityGridLabel: { flex: 1, fontSize: 12, fontWeight: '600', color: COLORS.textPrimary },
+  amenityGridLabel: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.textPrimary },
 
   reviewsHeaderRow: {
     flexDirection: 'row',
@@ -480,11 +491,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  reviewsCount: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  writeReviewLink: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-  reviewHint: { fontSize: 13, color: COLORS.textMuted, marginBottom: 8 },
+  reviewsCount: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  writeReviewLink: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  reviewHint: { fontSize: 13, color: colors.textMuted, marginBottom: 8 },
   reviewCard: {
-    backgroundColor: COLORS.backgroundAlt,
+    backgroundColor: colors.backgroundAlt,
     borderRadius: RADIUS.md,
     padding: 12,
     marginBottom: 8,
@@ -494,14 +505,14 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   reviewAvatarText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  reviewAuthor: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  reviewAuthor: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   reviewStars: { flexDirection: 'row', gap: 2 },
-  reviewComment: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
+  reviewComment: { fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
 
   footer: {
     position: 'absolute',
@@ -513,19 +524,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderTopWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     ...SHADOW.dark,
   },
-  footerPrice: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
-  footerNight: { fontSize: 11, color: COLORS.textSecondary },
+  footerPrice: { fontSize: 18, fontWeight: '800', color: colors.primary },
+  footerNight: { fontSize: 11, color: colors.textSecondary },
   bookBtn: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: RADIUS.lg,
     ...SHADOW.sm,
   },
   bookBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-});
+  });
+}

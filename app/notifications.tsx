@@ -1,10 +1,11 @@
 import { useI18n } from '../context/I18nContext';
 import { useAuth } from '../context/AuthContext';
-import { COLORS, RADIUS, SHADOW } from '../constants/theme';
+import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { getErrorMessage } from '../services/api';
 import { updateMe, type NotificationChannel } from '../services/auth';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -52,6 +53,8 @@ export default function NotificationsScreen() {
   const { t } = useI18n();
   const router = useRouter();
   const { user, refresh } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [channels, setChannels] = useState<NotificationChannel[]>(
     user?.notificationChannels?.length ? user.notificationChannels : ['EMAIL', 'SMS'],
@@ -93,7 +96,7 @@ export default function NotificationsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topTitle}>{t.notifications}</Text>
         <View style={{ width: 38 }} />
@@ -102,7 +105,7 @@ export default function NotificationsScreen() {
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         {/* Real, API-backed section */}
         <View style={styles.syncedRow}>
-          <Ionicons name="cloud-done-outline" size={13} color={COLORS.success} />
+          <Ionicons name="cloud-done-outline" size={13} color={colors.success} />
           <Text style={styles.syncedText}>Synced to your account</Text>
         </View>
         <Text style={styles.sectionTitle}>Notification Channels</Text>
@@ -132,7 +135,7 @@ export default function NotificationsScreen() {
         {/* Local-only categorized toggles */}
         <View style={styles.masterCard}>
           <View style={styles.masterIconWrap}>
-            <Ionicons name="notifications" size={22} color={COLORS.primary} />
+            <Ionicons name="notifications" size={22} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.masterTitle}>Push Notifications</Text>
@@ -143,7 +146,7 @@ export default function NotificationsScreen() {
           <Switch
             value={prefs.push}
             onValueChange={() => toggle('push')}
-            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor="#fff"
           />
         </View>
@@ -273,22 +276,24 @@ function ChannelRow({
   onToggle: () => void;
   noBorder?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={[styles.row, noBorder && { borderBottomWidth: 0 }]}>
       <View style={styles.rowIconWrap}>
-        <Ionicons name={icon} size={17} color={COLORS.primary} />
+        <Ionicons name={icon} size={17} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowLabel}>{label}</Text>
         {sub ? <Text style={styles.rowSub} numberOfLines={1}>{sub}</Text> : null}
       </View>
       {saving ? (
-        <ActivityIndicator size="small" color={COLORS.primary} />
+        <ActivityIndicator size="small" color={colors.primary} />
       ) : (
         <Switch
           value={active}
           onValueChange={onToggle}
-          trackColor={{ false: COLORS.border, true: COLORS.primary }}
+          trackColor={{ false: colors.border, true: colors.primary }}
           thumbColor="#fff"
         />
       )}
@@ -305,6 +310,8 @@ function Section({
   dimmed?: boolean;
   children: React.ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={[styles.section, dimmed && { opacity: 0.45 }]}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -330,10 +337,12 @@ function Row({
   disabled?: boolean;
   noBorder?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={[styles.row, noBorder && { borderBottomWidth: 0 }]}>
       <View style={styles.rowIconWrap}>
-        <Ionicons name={icon} size={17} color={COLORS.primary} />
+        <Ionicons name={icon} size={17} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowLabel}>{label}</Text>
@@ -343,15 +352,16 @@ function Row({
         value={value}
         onValueChange={onToggle}
         disabled={disabled}
-        trackColor={{ false: COLORS.border, true: COLORS.primary }}
+        trackColor={{ false: colors.border, true: colors.primary }}
         thumbColor="#fff"
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -363,19 +373,19 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topTitle: { fontWeight: '700', fontSize: 17, color: COLORS.textPrimary },
+  topTitle: { fontWeight: '700', fontSize: 17, color: colors.textPrimary },
 
   body: { padding: 16, paddingBottom: 40 },
 
   syncedRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 6, marginLeft: 4 },
-  syncedText: { fontSize: 11, fontWeight: '700', color: COLORS.success },
+  syncedText: { fontSize: 11, fontWeight: '700', color: colors.success },
   channelHint: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     lineHeight: 17,
     marginTop: 8,
     marginBottom: 24,
@@ -386,7 +396,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.xl,
     padding: 16,
     marginBottom: 24,
@@ -396,25 +406,25 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  masterTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  masterSub: { fontSize: 12, color: COLORS.textSecondary },
+  masterTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  masterSub: { fontSize: 12, color: colors.textSecondary },
 
   section: { marginBottom: 20 },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 8,
     marginLeft: 4,
   },
   sectionCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     ...SHADOW.sm,
@@ -426,25 +436,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   rowIconWrap: {
     width: 34,
     height: 34,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rowLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  rowSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  rowLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  rowSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 
   footnote: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 20,
     marginTop: 4,
   },
-});
+  });
+}
