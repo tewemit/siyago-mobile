@@ -26,14 +26,16 @@ type ThemeContextType = {
 };
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light',
-  colors: LIGHT_COLORS,
-  statusColor: LIGHT_STATUS_COLOR,
+  theme: 'navy',
+  colors: NAVY_COLORS,
+  statusColor: NAVY_STATUS_COLOR,
   setTheme: async () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeName>('light');
+  // Navy is the brand default — falls back to it until a saved preference
+  // (or none, meaning the user never changed it) resolves from SecureStore.
+  const [theme, setThemeState] = useState<ThemeName>('navy');
 
   useEffect(() => {
     SecureStore.getItemAsync(THEME_KEY).then((saved) => {

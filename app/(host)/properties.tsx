@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { getHostProperties, type Property } from '../../services/properties';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -19,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function HostPropertiesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function HostPropertiesScreen() {
                 </Text>
                 <Text style={styles.price}>
                   {item.pricePerNight > 0
-                    ? `${item.currency} ${item.pricePerNight.toLocaleString()} / night`
+                    ? `${format(item.pricePerNight)} / night`
                     : 'Rates managed on the web dashboard'}
                 </Text>
               </View>

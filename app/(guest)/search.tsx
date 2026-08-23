@@ -1,9 +1,10 @@
 import { useI18n } from '../../context/I18nContext';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { browseProperties, formatLocation, searchPropertiesAdvanced, type Property } from '../../services/properties';
 import { getPropertyTypes, type MasterOption } from '../../services/master';
-import DateField, { toISODate } from '../../components/DateField';
+import DateField, { toISODate, parseISODate } from '../../components/DateField';
 import Stepper from '../../components/Stepper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -20,23 +21,42 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+/** One room's occupancy in a multi-room search. */
+type RoomRequest = { adults: number; children: number };
+
 export default function SearchScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { colors } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const params = useLocalSearchParams<{ q?: string }>();
+  const params = useLocalSearchParams<{
+    q?: string;
+    checkInDate?: string;
+    checkOutDate?: string;
+    adults?: string;
+    children?: string;
+    showFilters?: string;
+  }>();
   const [query, setQuery] = useState(params.q ?? '');
   const [results, setResults] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  // Home's quick-search card can deep-link straight into a ready-to-run
+  // search (dates + guests already chosen) — open the filters panel too so
+  // the guest can see/adjust what was carried over instead of it being
+  // invisibly applied.
+  const [showFilters, setShowFilters] = useState(() => !!(params.showFilters || params.checkInDate));
 
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [numberOfRooms, setNumberOfRooms] = useState(1);
+  const [checkIn, setCheckIn] = useState<Date | null>(() =>
+    params.checkInDate ? parseISODate(params.checkInDate) : null
+  );
+  const [checkOut, setCheckOut] = useState<Date | null>(() =>
+    params.checkOutDate ? parseISODate(params.checkOutDate) : null
+  );
+  const [rooms, setRooms] = useState<RoomRequest[]>(() => [
+    { adults: Math.max(1, Number(params.adults) || 1), children: Math.max(0, Number(params.children) || 0) },
+  ]);
   const [types, setTypes] = useState<MasterOption[]>([]);
   const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
 
@@ -45,11 +65,23 @@ export default function SearchScreen() {
   }, []);
 
   useEffect(() => {
-    if (params.q) handleSearch();
+    if (params.q || params.checkInDate) handleSearch();
   }, []);
 
   function toggleType(id: number) {
     setSelectedTypeIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function addRoom() {
+    setRooms((prev) => [...prev, { adults: 1, children: 0 }]);
+  }
+
+  function removeRoom(index: number) {
+    setRooms((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateRoom(index: number, field: keyof RoomRequest, value: number) {
+    setRooms((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
   }
 
   async function handleSearch() {
@@ -57,13 +89,21 @@ export default function SearchScreen() {
     setSearched(true);
     try {
       if (checkIn && checkOut) {
+        // The search API only accepts a single adults/children/numberOfRooms
+        // combo — it looks for ONE room type whose per-unit capacity fits
+        // `adults`/`children` with at least `numberOfRooms` units free (see
+        // propertyService.getAvailableProperties). A heterogeneous per-room
+        // breakdown is only meaningful once a specific property (and its
+        // real room-type inventory) is chosen, on the booking-summary screen.
+        // Here we conservatively use the largest single room's requirement
+        // so every matched property can actually seat that room.
         const res = await searchPropertiesAdvanced({
           city: query.trim() || undefined,
           checkInDate: toISODate(checkIn),
           checkOutDate: toISODate(checkOut),
-          adults,
-          children,
-          numberOfRooms,
+          adults: Math.max(1, ...rooms.map((r) => r.adults)),
+          children: Math.max(0, ...rooms.map((r) => r.children)),
+          numberOfRooms: rooms.length,
           typeIds: selectedTypeIds,
         });
         setResults(res.data);
@@ -120,9 +160,28 @@ export default function SearchScreen() {
             <DateField label={t.check_out} icon="log-out-outline" value={checkOut} onChange={setCheckOut} minimumDate={checkIn ?? new Date()} />
           </View>
 
-          <Stepper label={t.adults} value={adults} onChange={setAdults} min={1} />
-          <Stepper label={t.children} value={children} onChange={setChildren} min={0} />
-          <Stepper label={t.rooms} value={numberOfRooms} onChange={setNumberOfRooms} min={1} />
+          <View style={styles.roomsHeaderRow}>
+            <Text style={styles.roomsHeaderText}>{t.rooms}</Text>
+            <Text style={styles.roomCountBadge}>{rooms.length}</Text>
+          </View>
+          {rooms.map((room, index) => (
+            <View key={index} style={styles.roomCard}>
+              <View style={styles.roomCardHeaderRow}>
+                <Text style={styles.roomCardLabel}>{t.room} {index + 1}</Text>
+                {rooms.length > 1 && (
+                  <TouchableOpacity onPress={() => removeRoom(index)} hitSlop={8}>
+                    <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <Stepper label={t.adults} value={room.adults} onChange={(v) => updateRoom(index, 'adults', v)} min={1} />
+              <Stepper label={t.children} value={room.children} onChange={(v) => updateRoom(index, 'children', v)} min={0} />
+            </View>
+          ))}
+          <TouchableOpacity style={styles.addRoomBtn} onPress={addRoom} activeOpacity={0.8}>
+            <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+            <Text style={styles.addRoomBtnText}>{t.add_room}</Text>
+          </TouchableOpacity>
 
           {types.length > 0 && (
             <View style={styles.typeChipsRow}>
@@ -163,7 +222,21 @@ export default function SearchScreen() {
               style={styles.card}
               activeOpacity={0.88}
               onPress={() =>
-                router.push({ pathname: '/property/[id]', params: { id: item.id } })
+                router.push({
+                  pathname: '/property/[id]',
+                  // Carries the dates/party size the guest already searched
+                  // with, so room-selection doesn't ask them to pick again —
+                  // purely a convenience default, still fully editable there.
+                  // Mirrors the same max-across-rooms aggregation the search
+                  // request itself uses just above.
+                  params: {
+                    id: item.id,
+                    ...(checkIn && { checkInDate: toISODate(checkIn) }),
+                    ...(checkOut && { checkOutDate: toISODate(checkOut) }),
+                    adults: String(Math.max(1, ...rooms.map((r) => r.adults))),
+                    children: String(Math.max(0, ...rooms.map((r) => r.children))),
+                  },
+                })
               }
             >
               {item.thumbnail ? (
@@ -186,7 +259,7 @@ export default function SearchScreen() {
                   </View>
                 ) : null}
                 <Text style={styles.cardPrice}>
-                  <Text style={styles.priceAmt}>{item.currency} {item.pricePerNight.toLocaleString()}</Text>
+                  <Text style={styles.priceAmt}>{format(item.pricePerNight)}</Text>
                   <Text style={styles.priceNight}> {t.per_night}</Text>
                 </Text>
               </View>
@@ -247,6 +320,34 @@ function createStyles(colors: ThemeColors) {
     ...SHADOW.sm,
   },
   dateRow: { flexDirection: 'row', gap: 10, marginBottom: 4 },
+
+  roomsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 6 },
+  roomsHeaderText: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  roomCountBadge: { fontSize: 12, fontWeight: '700', color: colors.primary },
+  roomCard: {
+    backgroundColor: colors.background,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  roomCardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8 },
+  roomCardLabel: { fontSize: 12, fontWeight: '700', color: colors.textSecondary },
+  addRoomBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+    borderRadius: RADIUS.md,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+  addRoomBtnText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+
   typeChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   typeChip: {
     paddingHorizontal: 14,

@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <text x="256" y="300" font-family="Liberation Sans, Arial, Helvetica, sans-serif" font-size="256" font-weight="700" text-anchor="middle">
+    <tspan fill="#1a56b0">S</tspan><tspan fill="#e2661f">G</tspan>
+  </text>
+  <circle cx="209" cy="365" r="23" fill="#e2661f"/>
+  <circle cx="256" cy="365" r="23" fill="#4a9e2f"/>
+  <circle cx="303" cy="365" r="23" fill="#1a56b0"/>
+</svg>

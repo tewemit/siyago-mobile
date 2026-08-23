@@ -1,6 +1,7 @@
 import { useI18n } from '../../context/I18nContext';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { getBookingByRef, verifyEthSwitchPayment, type Booking } from '../../services/bookings';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -25,6 +26,7 @@ export default function BookingDetailsScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const { colors, statusColor } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -146,7 +148,7 @@ export default function BookingDetailsScreen() {
           <Row label={t.guests} value={String(booking.guests)} icon="people-outline" />
           <Row
             label={t.total}
-            value={`${booking.currency} ${booking.totalAmount.toLocaleString()}`}
+            value={format(booking.totalAmount)}
             bold
             noBorder
           />

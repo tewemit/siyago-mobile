@@ -21,8 +21,8 @@ export type Booking = {
   checkIn: string;
   checkOut: string;
   guests: number;
+  /** ETB-denominated — display via useCurrency()'s format()/convert(). */
   totalAmount: number;
-  currency: string;
   status: BookingStatus;
   reference: string;
   property?: {
@@ -41,15 +41,28 @@ export type CreateBookingResult = Booking & {
 
 export type PaymentMethod = 'STRIPE' | 'CASH' | 'ETH_SWITCH';
 
+/** One physical room being booked, with who's staying in it. */
+export type BookingRoomLine = {
+  roomId: number;
+  numberOfRooms: number;
+  numberOfAdults: number;
+  numberOfChildren: number;
+  /**
+   * A guest-selected RoomPriceOption id (ROOM_PRICING_LINES_EXECUTION.md) —
+   * re-validated server-side, never trusted for price. Omit for a flat-rate
+   * (standardRatePerNight) room instance.
+   */
+  pricingLineId?: number;
+};
+
 type CreateBookingCommon = {
   propertyId: number;
-  roomId: number;
-  numberOfRooms?: number;
-  numberOfAdults?: number;
-  numberOfChildren?: number;
+  bookingRooms: BookingRoomLine[];
   checkInDate: string;
   checkOutDate: string;
   paymentMethod?: PaymentMethod;
+  /** Re-validated server-side against this exact booking — see calculatePrice's couponCode doc. */
+  couponCode?: string;
 };
 
 /**
@@ -72,8 +85,6 @@ export type CheckoutResult =
   | { confirmed: true; bookingReference: string }
   | { confirmed?: false; paymentLink: string; holdExpiresAt: string; bookingReference: string };
 
-const DEFAULT_CURRENCY = 'USD';
-
 /** Maps the API's raw booking DTO (checkInDate/checkOutDate/totalPrice/nested property+rooms) to the shape the UI consumes. */
 function normalize(raw: any): Booking {
   const bookingRooms = Array.isArray(raw.bookingRooms) ? raw.bookingRooms : [];
@@ -94,7 +105,6 @@ function normalize(raw: any): Booking {
     checkOut: raw.checkOutDate ?? '',
     guests: guests || 1,
     totalAmount: raw.totalPrice ?? 0,
-    currency: raw.transaction?.currency ?? DEFAULT_CURRENCY,
     status: raw.status,
     reference: raw.reference,
     property: raw.property
@@ -134,6 +144,62 @@ export async function verifyEthSwitchPayment(
   return data;
 }
 
+export type PriceBreakdownRoomLine = {
+  roomId: number;
+  roomType: string;
+  quantity: number;
+  numberOfAdults: number;
+  numberOfChildren: number;
+  /** ETB-denominated. */
+  effectiveRatePerNight: number;
+  /** ETB-denominated — this line's total across all its nights/units. */
+  lineTotal: number;
+};
+
+/** A successfully-applied coupon's effect on this specific price preview — null when no couponCode was supplied or it didn't match. */
+export type CouponDiscount = {
+  code: string;
+  percent: number;
+  /** ETB-denominated. */
+  amount: number;
+};
+
+export type PriceBreakdown = {
+  nights: number;
+  rooms: PriceBreakdownRoomLine[];
+  subtotal: number;
+  couponDiscount: CouponDiscount | null;
+  taxEnabled: boolean;
+  totalTax: number;
+  /** ETB-denominated — the authoritative total to charge the guest. */
+  grandTotal: number;
+};
+
+/**
+ * Server-authoritative price preview — POST /bookings/calculate-price.
+ * Public, no auth required. Re-runs the same discount/tax/occupancy-capacity
+ * logic `POST /bookings` uses to actually create the booking, so this is the
+ * only accurate way to show a multi-room total (VAT/service charge/promos
+ * aren't reproducible client-side) and it throws a descriptive 422 if any
+ * line's numberOfAdults/numberOfChildren exceeds that room's capacity.
+ */
+export async function calculatePrice(params: {
+  propertyId: number;
+  checkInDate: string;
+  checkOutDate: string;
+  rooms: BookingRoomLine[];
+  /**
+   * A platform-wide OR property-scoped promo code (COUPON_SCOPE_RBAC_CORRECTION)
+   * — re-validated server-side (active/not-expired/scope-matches-this-property)
+   * every time; an invalid/expired/wrong-property code simply comes back with
+   * `couponDiscount: null` rather than an error.
+   */
+  couponCode?: string;
+}): Promise<PriceBreakdown> {
+  const { data } = await api.post('/bookings/calculate-price', params);
+  return data;
+}
+
 /**
  * Creates a booking. The response's `status` depends entirely on
  * `paymentMethod`: CASH bookings come back already CONFIRMED (no
@@ -151,15 +217,9 @@ export async function createBooking(
     propertyId: payload.propertyId,
     checkInDate: payload.checkInDate,
     checkOutDate: payload.checkOutDate,
-    bookingRooms: [
-      {
-        roomId: payload.roomId,
-        numberOfRooms: payload.numberOfRooms ?? 1,
-        numberOfAdults: payload.numberOfAdults ?? 1,
-        numberOfChildren: payload.numberOfChildren ?? 0,
-      },
-    ],
+    bookingRooms: payload.bookingRooms,
     paymentMethod: payload.paymentMethod ?? 'CASH',
+    couponCode: payload.couponCode,
   });
   return {
     ...normalize(data),

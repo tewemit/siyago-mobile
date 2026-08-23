@@ -1,6 +1,7 @@
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import {
   formatLocation,
@@ -11,12 +12,15 @@ import {
   type PropertyBadge,
 } from '../../services/properties';
 import { getPropertyTypes, type MasterOption } from '../../services/master';
+import DateField, { toISODate } from '../../components/DateField';
+import Stepper from '../../components/Stepper';
+import GradientButton from '../../components/GradientButton';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Image,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -26,6 +30,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -47,6 +52,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { t } = useI18n();
   const { colors } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [featuredList, setFeaturedList] = useState<Property[]>([]);
   const [nearbyList, setNearbyList] = useState<Property[]>([]);
@@ -54,6 +60,11 @@ export default function HomeScreen() {
   const [types, setTypes] = useState<MasterOption[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [checkIn, setCheckIn] = useState<Date | null>(null);
+  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [showGuestsPicker, setShowGuestsPicker] = useState(false);
   const searchRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -69,14 +80,24 @@ export default function HomeScreen() {
     getPropertyTypes().then(setTypes).catch(() => setTypes([]));
   }, []);
 
-  function handleSearchSubmit() {
-    if (searchText.trim()) {
-      router.push({ pathname: '/(guest)/search', params: { q: searchText.trim() } });
-    }
+  /** Shared params for both the quick-search and "more filters" actions below — carries whatever the guest already filled in here so nothing typed is lost. */
+  function buildSearchParams() {
+    return {
+      ...(searchText.trim() ? { q: searchText.trim() } : {}),
+      ...(checkIn && checkOut
+        ? { checkInDate: toISODate(checkIn), checkOutDate: toISODate(checkOut) }
+        : {}),
+      adults: String(adults),
+      children: String(children),
+    };
   }
 
-  function goToCity(city: string) {
-    router.push({ pathname: '/(guest)/search', params: { q: city } });
+  function handleSearchSubmit() {
+    router.push({ pathname: '/(guest)/search', params: buildSearchParams() });
+  }
+
+  function handleOpenFilters() {
+    router.push({ pathname: '/(guest)/search', params: { ...buildSearchParams(), showFilters: '1' } });
   }
 
   function matchesType(p: Property) {
@@ -88,14 +109,6 @@ export default function HomeScreen() {
   const topPicks = (nearbyList.length > 0 ? nearbyList : featuredList).filter(matchesType);
   const hero = featured[0] ?? topPicks[0] ?? null;
   const restOfTopPicks = topPicks.filter((p) => p.id !== hero?.id);
-
-  const destinations = useMemo(() => {
-    const seen = new Map<string, Property>();
-    [...featuredList, ...nearbyList].forEach((p) => {
-      if (p.city && !seen.has(p.city)) seen.set(p.city, p);
-    });
-    return Array.from(seen.values()).slice(0, 6);
-  }, [featuredList, nearbyList]);
 
   const initials = user
     ? [user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('').toUpperCase()
@@ -127,50 +140,80 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Search bar */}
-        <View style={styles.searchRow}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color={colors.textMuted} />
-            <TextInput
-              ref={searchRef}
-              style={styles.searchInput}
-              placeholder={t.search_placeholder}
-              placeholderTextColor={colors.textMuted}
-              value={searchText}
-              onChangeText={setSearchText}
-              onSubmitEditing={handleSearchSubmit}
-              returnKeyType="search"
-            />
+        {/* Search card */}
+        <View style={styles.searchCard}>
+          <View style={styles.searchTopRow}>
+            <View style={styles.destInputWrap}>
+              <Ionicons name="location-outline" size={16} color={colors.textMuted} />
+              <TextInput
+                ref={searchRef}
+                style={styles.destInput}
+                placeholder={t.search_placeholder}
+                placeholderTextColor={colors.textMuted}
+                value={searchText}
+                onChangeText={setSearchText}
+                onSubmitEditing={handleSearchSubmit}
+                returnKeyType="search"
+              />
+            </View>
+            <TouchableOpacity style={styles.ghostIconBtn} onPress={handleOpenFilters} activeOpacity={0.8}>
+              <Ionicons name="options-outline" size={18} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSearchSubmit} activeOpacity={0.85}>
+              <LinearGradient
+                colors={colors.primaryGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.searchIconBtn}
+              >
+                <Ionicons name="search" size={18} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.filterBtn} onPress={() => router.push('/(guest)/search')}>
-            <Ionicons name="options" size={20} color="#fff" />
-          </TouchableOpacity>
+
+          <View style={styles.searchFieldsRow}>
+            <DateField
+              compact
+              label={t.check_in}
+              value={checkIn}
+              onChange={setCheckIn}
+              minimumDate={new Date()}
+              placeholder="Add date"
+            />
+            <DateField
+              compact
+              label={t.check_out}
+              value={checkOut}
+              onChange={setCheckOut}
+              minimumDate={checkIn ?? new Date()}
+              placeholder="Add date"
+            />
+            <TouchableOpacity style={styles.compactWrap} onPress={() => setShowGuestsPicker(true)} activeOpacity={0.7}>
+              <Text style={styles.compactLabel} numberOfLines={1}>{t.guests_label}</Text>
+              <Text style={styles.compactValue} numberOfLines={1}>
+                {adults} {t.adults}{children > 0 ? `, ${children} ${t.children}` : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Guests picker */}
+        <Modal visible={showGuestsPicker} transparent animationType="slide" onRequestClose={() => setShowGuestsPicker(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalSheet}>
+              <View style={styles.modalHandle} />
+              <Text style={styles.modalTitle}>{t.guests_label}</Text>
+              <Stepper label={t.adults} value={adults} onChange={setAdults} min={1} />
+              <Stepper label={t.children} value={children} onChange={setChildren} min={0} />
+              <GradientButton label="Done" onPress={() => setShowGuestsPicker(false)} style={styles.modalDoneBtn} />
+            </View>
+          </View>
+        </Modal>
 
         {isLoading ? (
           <ActivityIndicator style={{ marginTop: 60 }} size="large" color={colors.primary} />
         ) : (
           <>
-            {/* Destination quick-picks */}
-            {destinations.length > 0 && (
-              <FlatList
-                data={destinations}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(d) => d.city}
-                contentContainerStyle={styles.destRow}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.destItem} onPress={() => goToCity(item.city)} activeOpacity={0.85}>
-                    {item.thumbnail ? (
-                      <Image source={{ uri: item.thumbnail }} style={styles.destAvatar} />
-                    ) : (
-                      <View style={[styles.destAvatar, { backgroundColor: colors.primaryLight }]} />
-                    )}
-                    <Text style={styles.destLabel} numberOfLines={1}>{item.city}</Text>
-                  </TouchableOpacity>
-                )}
-              />
-            )}
 
             {/* Hero featured deal */}
             {hero && (
@@ -194,7 +237,7 @@ export default function HomeScreen() {
                 <View style={styles.heroTextWrap}>
                   <Text style={styles.heroTitle} numberOfLines={1}>{hero.name}</Text>
                   <Text style={styles.heroSub} numberOfLines={1}>
-                    {formatLocation(hero) || hero.typeName} · {hero.currency} {hero.pricePerNight.toLocaleString()}/night
+                    {formatLocation(hero) || hero.typeName} · {format(hero.pricePerNight)}/night
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -268,6 +311,7 @@ function PickCard({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const badgeColors = useMemo(() => getBadgeColors(colors), [colors]);
   return (
@@ -304,7 +348,7 @@ function PickCard({
           )}
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={styles.cardPriceAmount}>{property.currency} {property.pricePerNight.toLocaleString()}</Text>
+          <Text style={styles.cardPriceAmount}>{format(property.pricePerNight)}</Text>
           <Text style={styles.cardPriceSub}>{t.per_night}</Text>
         </View>
       </View>
@@ -347,35 +391,81 @@ function createStyles(colors: ThemeColors) {
     },
     avatarText: { color: '#fff', fontSize: 14, fontWeight: '800' },
 
-    // Search
-    searchRow: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 20, gap: 10 },
-    searchBar: {
+    // Search card
+    searchCard: {
+      marginHorizontal: 20,
+      marginBottom: 20,
+      backgroundColor: colors.card,
+      borderRadius: RADIUS.xl,
+      padding: 16,
+      ...SHADOW.dark,
+    },
+    searchTopRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+    destInputWrap: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.card,
-      borderRadius: RADIUS.lg,
-      paddingHorizontal: 14,
-      height: 50,
       gap: 8,
-      ...SHADOW.dark,
+      backgroundColor: colors.backgroundAlt,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: 12,
+      height: 44,
     },
-    searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, height: '100%' },
-    filterBtn: {
-      width: 50,
-      height: 50,
-      backgroundColor: colors.primary,
-      borderRadius: RADIUS.lg,
+    destInput: { flex: 1, fontSize: 14, color: colors.textPrimary, height: '100%' },
+    searchFieldsRow: { flexDirection: 'row', gap: 8 },
+    compactWrap: {
+      flex: 1,
+      backgroundColor: colors.backgroundAlt,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
+    compactLabel: {
+      fontSize: 9,
+      fontWeight: '700',
+      color: colors.textMuted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+      marginBottom: 2,
+    },
+    compactValue: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+    ghostIconBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: RADIUS.full,
+      backgroundColor: colors.backgroundAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
       justifyContent: 'center',
       alignItems: 'center',
-      ...SHADOW.sm,
+    },
+    searchIconBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: RADIUS.full,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
 
-    // Destinations
-    destRow: { paddingHorizontal: 20, gap: 16, paddingBottom: 8 },
-    destItem: { alignItems: 'center', width: 64 },
-    destAvatar: { width: 58, height: 58, borderRadius: 29, marginBottom: 6, ...SHADOW.sm },
-    destLabel: { fontSize: 11, fontWeight: '600', color: colors.textPrimary },
+    // Guests picker modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    modalSheet: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: RADIUS.xl,
+      borderTopRightRadius: RADIUS.xl,
+      padding: 20,
+      paddingBottom: 36,
+    },
+    modalHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      alignSelf: 'center',
+      marginBottom: 16,
+    },
+    modalTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+    modalDoneBtn: { marginTop: 16 },
 
     // Hero
     heroCard: {

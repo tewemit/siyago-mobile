@@ -1,7 +1,8 @@
 import { useI18n } from '../context/I18nContext';
-import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
+import { RADIUS, type ThemeColors } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { createCheckout, getBookingByRef, getErrorMessage } from '../services/bookings';
+import GradientButton from '../components/GradientButton';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
@@ -103,14 +104,7 @@ export default function PaymentScreen() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.btn, submitting && styles.btnDisabled]}
-          onPress={handleContinue}
-          disabled={submitting}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.btnText}>{submitting ? t.processing : t.pay_now}</Text>
-        </TouchableOpacity>
+        <GradientButton label={t.pay_now} onPress={handleContinue} loading={submitting} style={styles.btnWrap} />
       </View>
     </SafeAreaView>
   );
@@ -164,16 +158,6 @@ function createStyles(colors: ThemeColors) {
   optionTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
   optionSub: { fontSize: 12, color: colors.textSecondary },
 
-  btn: {
-    backgroundColor: colors.primary,
-    height: 54,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 16,
-    ...SHADOW.sm,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  btnWrap: { marginTop: 16 },
   });
 }

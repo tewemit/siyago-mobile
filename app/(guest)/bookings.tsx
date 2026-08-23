@@ -2,7 +2,9 @@ import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { cancelBooking, getErrorMessage, getMyBookings, type Booking } from '../../services/bookings';
+import GradientButton from '../../components/GradientButton';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -104,6 +106,7 @@ export default function BookingsScreen() {
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const { colors, statusColor } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,9 +177,12 @@ export default function BookingsScreen() {
           </View>
           <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' }}>{t.bookings}</Text>
           <Text style={{ fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginBottom: 28, lineHeight: 20 }}>Sign in to view and manage your bookings</Text>
-          <TouchableOpacity style={{ backgroundColor: colors.primary, borderRadius: RADIUS.full, paddingVertical: 14, paddingHorizontal: 40 }} onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>{t.sign_in}</Text>
-          </TouchableOpacity>
+          <GradientButton
+            label={t.sign_in}
+            onPress={() => router.push('/(auth)/sign-in')}
+            size="compact"
+            style={{ borderRadius: RADIUS.full }}
+          />
         </View>
       </SafeAreaView>
     );
@@ -248,7 +254,7 @@ export default function BookingsScreen() {
                     </View>
                   )}
                   <Text style={styles.priceText}>
-                    {item.currency} {item.totalAmount.toLocaleString()}
+                    {format(item.totalAmount)}
                   </Text>
                 </View>
                 <View style={styles.rightCol}>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { getHostBookings, type Booking } from '../../services/bookings';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -18,6 +19,7 @@ import {
 export default function HostBookingsScreen() {
   const router = useRouter();
   const { colors, statusColor } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function HostBookingsScreen() {
                   {item.checkIn} → {item.checkOut}
                 </Text>
                 <Text style={styles.amount}>
-                  {item.currency} {item.totalAmount.toLocaleString()}
+                  {format(item.totalAmount)}
                 </Text>
               </TouchableOpacity>
             );

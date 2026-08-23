@@ -1,7 +1,8 @@
 import { useI18n } from '../context/I18nContext';
-import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
+import { RADIUS, type ThemeColors } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { submitReview } from '../services/reviews';
+import GradientButton from '../components/GradientButton';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -90,14 +91,12 @@ export default function WriteReviewScreen() {
             textAlignVertical="top"
           />
 
-          <TouchableOpacity
-            style={[styles.btn, submitting && styles.btnDisabled]}
+          <GradientButton
+            label={t.apply_now}
             onPress={handleSubmit}
-            disabled={submitting}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.btnText}>{submitting ? t.applying : t.apply_now}</Text>
-          </TouchableOpacity>
+            loading={submitting}
+            style={{ marginTop: 24 }}
+          />
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -141,16 +140,5 @@ function createStyles(colors: ThemeColors) {
     minHeight: 120,
   },
 
-  btn: {
-    backgroundColor: colors.primary,
-    height: 54,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-    ...SHADOW.sm,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   });
 }

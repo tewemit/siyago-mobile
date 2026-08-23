@@ -1,8 +1,9 @@
 import { useI18n } from '../../context/I18nContext';
-import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { RADIUS, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { login } from '../../services/auth';
 import { setPendingLogin } from '../../services/otpSession';
+import GradientButton from '../../components/GradientButton';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -32,7 +33,10 @@ export default function SignInScreen() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>();
+    // Only re-check a field once the user leaves it (not on every
+    // keystroke) — otherwise, once a field has errored once, checks re-run
+    // and flash an error mid-type before the user has finished typing.
+  } = useForm<FormValues>({ reValidateMode: 'onBlur' });
 
   async function onSubmit({ email, password }: FormValues) {
     const cleanEmail = email.trim().toLowerCase();
@@ -128,16 +132,12 @@ export default function SignInScreen() {
           />
           {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
 
-          <TouchableOpacity
-            style={[styles.btn, isSubmitting && styles.btnDisabled]}
+          <GradientButton
+            label={isSubmitting ? t.sending : t.sign_in}
             onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.btnText}>
-              {isSubmitting ? t.sending : t.sign_in}
-            </Text>
-          </TouchableOpacity>
+            loading={isSubmitting}
+            style={styles.btnWrap}
+          />
 
           <View style={styles.linkRow}>
             <Text style={styles.linkText}>{t.no_account} </Text>
@@ -214,17 +214,7 @@ function createStyles(colors: ThemeColors) {
   input: { flex: 1, fontSize: 15, color: colors.textPrimary },
   error: { color: colors.error, fontSize: 12, marginBottom: 12 },
 
-  btn: {
-    backgroundColor: colors.primary,
-    height: 54,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    ...SHADOW.sm,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16, letterSpacing: 0.3 },
+  btnWrap: { marginTop: 20 },
 
   linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
   linkText: { color: colors.textSecondary, fontSize: 14 },

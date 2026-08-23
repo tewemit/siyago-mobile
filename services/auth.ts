@@ -71,11 +71,48 @@ export async function register(payload: {
 }
 
 /**
+ * Public pre-check used by sign-up forms (register-host, etc.) so a
+ * duplicate email can be caught right after the guest types it in, instead
+ * of only at final submit after they've already filled out property
+ * details and KYC uploads. The backend still enforces uniqueness
+ * independently at submit either way — this is purely a faster-feedback
+ * UX check, not a security boundary.
+ */
+export async function checkEmailAvailability(email: string): Promise<boolean> {
+  const { data } = await api.get<{ exists: boolean }>('/users/check-email', {
+    params: { email },
+  });
+  return data.exists;
+}
+
+/** React Native's FormData file shape — {uri, name, type}, not a web Blob/File object. */
+export type PickedFile = { uri: string; name: string; type: string };
+
+export type HostKycFiles = {
+  businessLicense?: PickedFile;
+  idProof?: PickedFile;
+  ownershipProof?: PickedFile;
+};
+
+function appendKycFiles(form: FormData, kyc?: HostKycFiles) {
+  if (!kyc) return;
+  (Object.entries(kyc) as [keyof HostKycFiles, PickedFile | undefined][]).forEach(
+    ([key, file]) => {
+      if (file) form.append(key, file as any);
+    },
+  );
+}
+
+/**
  * Register a brand-new host account (not yet logged in). The account is
  * created with role 'host' and status 'pending' — an admin must approve it
  * before the host can sign in and manage properties. Sent as multipart/
- * form-data because the API endpoint also accepts optional KYC file
- * uploads (not collected by this mobile flow yet).
+ * form-data since KYC documents (optional) are real file uploads.
+ *
+ * The API's validation schema for this endpoint is `.strict()` and only
+ * recognizes the fields typed below — anything else (property type, room
+ * count, etc.) gets the whole request rejected, so those never get sent
+ * here even though the mobile wizard collects them for the review screen.
  */
 export async function registerHost(payload: {
   firstName: string;
@@ -85,11 +122,14 @@ export async function registerHost(payload: {
   phoneNumber?: string;
   country?: string;
   hotelName?: string;
+  kyc?: HostKycFiles;
 }): Promise<{ id: number; email: string }> {
+  const { kyc, ...fields } = payload;
   const form = new FormData();
-  Object.entries(payload).forEach(([key, value]) => {
+  Object.entries(fields).forEach(([key, value]) => {
     if (value) form.append(key, value);
   });
+  appendKycFiles(form, kyc);
   const { data } = await api.post('/users/host-registration', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -99,16 +139,25 @@ export async function registerHost(payload: {
 /**
  * Lets an already-authenticated (logged-in) guest apply to become a host
  * without creating a duplicate account. Requires auth token (attached
- * automatically by the api interceptor).
+ * automatically by the api interceptor). Unlike `registerHost`, this
+ * endpoint's schema does accept `agreedDocumentIds`, so legal consent
+ * genuinely persists on this path.
  */
 export async function applyForHost(payload: {
   hotelName?: string;
   phoneNumber?: string;
+  kyc?: HostKycFiles;
+  agreedDocumentIds?: number[];
 }): Promise<AuthUser> {
+  const { kyc, agreedDocumentIds, ...fields } = payload;
   const form = new FormData();
-  Object.entries(payload).forEach(([key, value]) => {
+  Object.entries(fields).forEach(([key, value]) => {
     if (value) form.append(key, value);
   });
+  appendKycFiles(form, kyc);
+  if (agreedDocumentIds?.length) {
+    form.append('agreedDocumentIds', JSON.stringify(agreedDocumentIds));
+  }
   const { data } = await api.post('/users/me/host-application', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });

@@ -4,9 +4,11 @@ import { useI18n } from '../../context/I18nContext';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useRegion } from '../../context/RegionContext';
+import { useCurrency, CURRENCIES, type CurrencyCode } from '../../context/CurrencyContext';
 import { useTheme, type ThemeName } from '../../context/ThemeContext';
 import { LOCALE_NAMES, type Locale } from '../../i18n/translations';
 import { COUNTRIES } from '../../constants/countries';
+import GradientButton from '../../components/GradientButton';
 import { WEBSITE_URL } from '../../constants/config';
 import { getSiteContact, type SiteContact } from '../../services/master';
 import { useRouter } from 'expo-router';
@@ -30,12 +32,23 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t, locale, setLocale } = useI18n();
   const { region, setRegion } = useRegion();
+  const { currency, setCurrency, ratesAvailable } = useCurrency();
   const { theme, colors, setTheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showLangPicker, setShowLangPicker] = useState(false);
   const [showRegionPicker, setShowRegionPicker] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [regionSearch, setRegionSearch] = useState('');
+
+  async function handleSelectCurrency(code: CurrencyCode) {
+    if (code !== 'ETB' && !ratesAvailable) {
+      Alert.alert(t.currency, t.currency_conversion_unavailable);
+      return;
+    }
+    await setCurrency(code);
+    setShowCurrencyPicker(false);
+  }
 
   const THEME_NAMES: Record<ThemeName, string> = { light: t.theme_light, navy: t.theme_navy };
 
@@ -192,9 +205,12 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.signInTitle}>{t.profile}</Text>
               <Text style={styles.signInSub}>Sign in to manage your profile, bookings and preferences</Text>
-              <TouchableOpacity style={styles.signInBtn} onPress={() => router.push('/(auth)/sign-in')}>
-                <Text style={styles.signInBtnText}>{t.sign_in}</Text>
-              </TouchableOpacity>
+              <GradientButton
+                label={t.sign_in}
+                onPress={() => router.push('/(auth)/sign-in')}
+                size="compact"
+                style={{ borderRadius: RADIUS.full }}
+              />
             </View>
 
             {/* SiyaGo Partner promo — signed-out visitors don't have an
@@ -232,6 +248,12 @@ export default function ProfileScreen() {
             label={t.region}
             value={region ?? undefined}
             onPress={() => setShowRegionPicker(true)}
+          />
+          <MenuItem
+            icon="cash-outline"
+            label={t.currency}
+            value={currency}
+            onPress={() => setShowCurrencyPicker(true)}
           />
           <MenuItem
             icon="language-outline"
@@ -295,6 +317,38 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.modalClose} onPress={() => setShowThemePicker(false)}>
+              <Text style={styles.modalCloseText}>{t.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Currency Picker Modal */}
+      <Modal
+        visible={showCurrencyPicker}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowCurrencyPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>{t.change_currency}</Text>
+            {CURRENCIES.map((code) => (
+              <TouchableOpacity
+                key={code}
+                style={styles.langItem}
+                onPress={() => handleSelectCurrency(code)}
+              >
+                <Text style={[styles.langText, code === currency && styles.langTextActive]}>
+                  {code}
+                </Text>
+                {code === currency && (
+                  <Ionicons name="checkmark" size={18} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.modalClose} onPress={() => setShowCurrencyPicker(false)}>
               <Text style={styles.modalCloseText}>{t.cancel}</Text>
             </TouchableOpacity>
           </View>
@@ -492,8 +546,6 @@ function createStyles(colors: ThemeColors) {
     },
     signInTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, textAlign: 'center' },
     signInSub: { fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginBottom: 18, lineHeight: 19 },
-    signInBtn: { backgroundColor: colors.primary, borderRadius: RADIUS.full, paddingVertical: 12, paddingHorizontal: 36 },
-    signInBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
     partnerCard: {
       flexDirection: 'row',

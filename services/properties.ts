@@ -4,6 +4,7 @@ import { API_HOST } from '../constants/config';
 export type RoomOption = {
   id: string;
   name: string;
+  /** ETB-denominated — display via useCurrency()'s format()/convert(). */
   ratePerNight: number;
   maxAdults: number;
   maxChildren: number;
@@ -30,7 +31,6 @@ export type Property = {
   address?: string;
   thumbnail?: string;
   pricePerNight: number;
-  currency: string;
   rating?: number;
   reviewCount?: number;
   typeName?: string;
@@ -60,8 +60,6 @@ export type AdvancedSearchParams = {
   facilities?: number[];
   amenities?: number[];
 };
-
-const DEFAULT_CURRENCY = 'USD';
 
 /** Builds a full image URL from the relative filename stored by the API. */
 export function getImageUrl(mainImage?: string | null): string | undefined {
@@ -123,8 +121,9 @@ export function normalizeProperty(raw: any): Property {
     country: raw.country ?? '',
     address: raw.street ?? raw.address ?? '',
     thumbnail: getImageUrl(raw.mainImage),
+    // ETB-denominated — display it via useCurrency()'s format()/convert(),
+    // never render this raw number with a hardcoded currency label.
     pricePerNight: minRate ?? 0,
-    currency: DEFAULT_CURRENCY,
     rating: raw.rating ?? undefined,
     reviewCount: raw.reviewCount ?? undefined,
     typeName: raw.type?.name ?? undefined,

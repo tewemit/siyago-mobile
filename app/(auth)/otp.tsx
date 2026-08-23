@@ -1,8 +1,9 @@
 import { useI18n } from '../../context/I18nContext';
-import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { RADIUS, type ThemeColors } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { login, verifyOtp } from '../../services/auth';
+import GradientButton from '../../components/GradientButton';
 import { clearPendingLogin, getPendingLogin } from '../../services/otpSession';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -139,16 +140,11 @@ export default function OtpScreen() {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={[styles.btn, isLoading && styles.btnDisabled]}
+        <GradientButton
+          label={isLoading ? t.verifying : t.verify}
           onPress={handleVerify}
-          disabled={isLoading}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.btnText}>
-            {isLoading ? t.verifying : t.verify}
-          </Text>
-        </TouchableOpacity>
+          loading={isLoading}
+        />
 
         <TouchableOpacity
           style={styles.resendRow}
@@ -232,16 +228,6 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.primaryLight,
     },
 
-    btn: {
-      backgroundColor: colors.primary,
-      height: 54,
-      borderRadius: RADIUS.lg,
-      justifyContent: 'center',
-      alignItems: 'center',
-      ...SHADOW.sm,
-    },
-    btnDisabled: { opacity: 0.6 },
-    btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 
     resendRow: { alignItems: 'center', marginTop: 20 },
     resendText: { color: colors.primary, fontWeight: '700', fontSize: 14 },

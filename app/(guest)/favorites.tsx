@@ -2,8 +2,10 @@ import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { getFavorites, toggleFavorite } from '../../services/favorites';
 import { formatLocation, type Property } from '../../services/properties';
+import GradientButton from '../../components/GradientButton';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -25,6 +27,7 @@ export default function FavoritesScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const { colors } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [favorites, setFavorites] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,9 +81,12 @@ export default function FavoritesScreen() {
           </View>
           <Text style={styles.emptyTitle}>{t.favorites}</Text>
           <Text style={styles.emptySub}>Sign in to save and view your favorite stays</Text>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/(auth)/sign-in')}>
-            <Text style={styles.primaryBtnText}>{t.sign_in}</Text>
-          </TouchableOpacity>
+          <GradientButton
+            label={t.sign_in}
+            onPress={() => router.push('/(auth)/sign-in')}
+            size="compact"
+            style={styles.primaryBtn}
+          />
         </View>
       </SafeAreaView>
     );
@@ -116,9 +122,12 @@ export default function FavoritesScreen() {
               </View>
               <Text style={styles.emptyTitle}>{t.no_favorites}</Text>
               <Text style={styles.emptySub}>Tap the heart icon on any property to save it here.</Text>
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.replace('/(guest)/search')}>
-                <Text style={styles.primaryBtnText}>{t.browse_properties}</Text>
-              </TouchableOpacity>
+              <GradientButton
+                label={t.browse_properties}
+                onPress={() => router.replace('/(guest)/search')}
+                size="compact"
+                style={styles.primaryBtn}
+              />
             </View>
           }
           renderItem={({ item }) => (
@@ -154,7 +163,7 @@ export default function FavoritesScreen() {
                   </View>
                 ) : null}
                 <Text style={styles.cardPrice}>
-                  <Text style={styles.priceAmt}>{item.currency} {item.pricePerNight.toLocaleString()}</Text>
+                  <Text style={styles.priceAmt}>{format(item.pricePerNight)}</Text>
                   <Text style={styles.priceNight}> {t.per_night}</Text>
                 </Text>
               </View>
@@ -249,12 +258,8 @@ function createStyles(colors: ThemeColors) {
   emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   emptySub: { textAlign: 'center', color: colors.textMuted, lineHeight: 22, fontSize: 14 },
   primaryBtn: {
-    backgroundColor: colors.primary,
     borderRadius: RADIUS.full,
-    paddingVertical: 14,
-    paddingHorizontal: 40,
     marginTop: 8,
   },
-  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   });
 }

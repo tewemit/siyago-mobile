@@ -1,6 +1,7 @@
 import { AuthProvider } from '../context/AuthContext';
 import { I18nProvider } from '../context/I18nContext';
 import { RegionProvider } from '../context/RegionContext';
+import { CurrencyProvider } from '../context/CurrencyContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import BottomBar from '../components/BottomBar';
 import { Stack } from 'expo-router';
@@ -28,9 +29,11 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <I18nProvider>
           <RegionProvider>
-            <ThemeProvider>
-              <AppShell />
-            </ThemeProvider>
+            <CurrencyProvider>
+              <ThemeProvider>
+                <AppShell />
+              </ThemeProvider>
+            </CurrencyProvider>
           </RegionProvider>
         </I18nProvider>
       </SafeAreaProvider>

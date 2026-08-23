@@ -1,6 +1,7 @@
 import { useI18n } from '../../context/I18nContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useCurrency } from '../../context/CurrencyContext';
 // LIGHT_COLORS (not the reactive `colors`) is used deliberately for the
 // floating hero buttons and their icons below — those buttons keep a fixed
 // near-white circular background regardless of theme (they sit on top of a
@@ -9,6 +10,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { LIGHT_COLORS, RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
 import { formatLocation, getPropertyById, type Property } from '../../services/properties';
 import { getFavoriteStatus, toggleFavorite } from '../../services/favorites';
+import GradientButton from '../../components/GradientButton';
 import { getPropertyReviews, getReviewEligibility, type Review, type ReviewEligibility } from '../../services/reviews';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -46,11 +48,19 @@ function facilityIcon(name: string): keyof typeof Ionicons.glyphMap {
 }
 
 export default function PropertyDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, checkInDate, checkOutDate, adults, children } = useLocalSearchParams<{
+    id: string;
+    /** Carried forward from search.tsx when the guest already picked dates/party size there — optional, room-selection defaults sensibly when absent. */
+    checkInDate?: string;
+    checkOutDate?: string;
+    adults?: string;
+    children?: string;
+  }>();
   const router = useRouter();
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  const { format } = useCurrency();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { width } = useWindowDimensions();
   const [property, setProperty] = useState<Property | null>(null);
@@ -194,7 +204,7 @@ export default function PropertyDetailScreen() {
             <Text style={styles.name} numberOfLines={2}>{property.name}</Text>
             <View style={styles.priceCol}>
               <Text style={styles.priceAmount}>
-                {property.currency} {property.pricePerNight.toLocaleString()}
+                {format(property.pricePerNight)}
               </Text>
               <Text style={styles.priceNight}>{t.per_night}</Text>
             </View>
@@ -326,19 +336,26 @@ export default function PropertyDetailScreen() {
       <View style={styles.footer}>
         <View>
           <Text style={styles.footerPrice}>
-            {property.currency} {property.pricePerNight.toLocaleString()}
+            {format(property.pricePerNight)}
           </Text>
           <Text style={styles.footerNight}>{t.per_night}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.bookBtn}
-          activeOpacity={0.85}
+        <GradientButton
+          label={t.booking_now}
+          size="compact"
           onPress={() =>
-            router.push({ pathname: '/booking-summary', params: { propertyId: property.id } })
+            router.push({
+              pathname: '/room-selection',
+              params: {
+                propertyId: property.id,
+                ...(checkInDate && { checkInDate }),
+                ...(checkOutDate && { checkOutDate }),
+                ...(adults && { adults }),
+                ...(children && { children }),
+              },
+            })
           }
-        >
-          <Text style={styles.bookBtnText}>{t.booking_now}</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );
@@ -531,13 +548,5 @@ function createStyles(colors: ThemeColors) {
   },
   footerPrice: { fontSize: 18, fontWeight: '800', color: colors.primary },
   footerNight: { fontSize: 11, color: colors.textSecondary },
-  bookBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: RADIUS.lg,
-    ...SHADOW.sm,
-  },
-  bookBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   });
 }

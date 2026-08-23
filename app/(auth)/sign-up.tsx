@@ -1,7 +1,8 @@
 import { useI18n } from '../../context/I18nContext';
-import { RADIUS, SHADOW, type ThemeColors } from '../../constants/theme';
+import { RADIUS, type ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { register } from '../../services/auth';
+import GradientButton from '../../components/GradientButton';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -24,6 +25,7 @@ type FormValues = {
   email: string;
   phoneNumber: string;
   password: string;
+  confirmPassword: string;
 };
 
 export default function SignUpScreen() {
@@ -34,10 +36,15 @@ export default function SignUpScreen() {
   const {
     control,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>();
+    // Only re-check a field once the user leaves it (not on every
+    // keystroke) — otherwise, once a field has errored once, the strength/
+    // pattern checks re-run and flash an error mid-type before the user has
+    // finished entering a fresh value.
+  } = useForm<FormValues>({ reValidateMode: 'onBlur' });
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit({ confirmPassword, ...values }: FormValues) {
     try {
       await register({ ...values, email: values.email.trim().toLowerCase() });
       Alert.alert(
@@ -167,19 +174,26 @@ export default function SignUpScreen() {
               },
             }}
             icon="lock-closed-outline"
-            extra={{ secureTextEntry: true }}
+            extra={{ secureTextEntry: true, autoCapitalize: 'none', autoCorrect: false }}
+          />
+          <InputField
+            name="confirmPassword"
+            label={t.confirm_password}
+            placeholder="••••••••"
+            rules={{
+              required: t.required,
+              validate: (value: string) => value === getValues('password') || t.passwords_dont_match,
+            }}
+            icon="lock-closed-outline"
+            extra={{ secureTextEntry: true, autoCapitalize: 'none', autoCorrect: false }}
           />
 
-          <TouchableOpacity
-            style={[styles.btn, isSubmitting && styles.btnDisabled]}
+          <GradientButton
+            label={isSubmitting ? t.sending : t.create_account}
             onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.btnText}>
-              {isSubmitting ? t.sending : t.create_account}
-            </Text>
-          </TouchableOpacity>
+            loading={isSubmitting}
+            style={styles.btnWrap}
+          />
 
           <View style={styles.linkRow}>
             <Text style={styles.linkText}>{t.already_account} </Text>
@@ -260,17 +274,7 @@ function createStyles(colors: ThemeColors) {
     input: { flex: 1, fontSize: 15, color: colors.textPrimary },
     error: { color: colors.error, fontSize: 12, marginBottom: 8 },
 
-    btn: {
-      backgroundColor: colors.primary,
-      height: 54,
-      borderRadius: RADIUS.lg,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: 20,
-      ...SHADOW.sm,
-    },
-    btnDisabled: { opacity: 0.6 },
-    btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    btnWrap: { marginTop: 20 },
 
     linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, marginBottom: 12 },
     linkText: { color: colors.textSecondary, fontSize: 14 },

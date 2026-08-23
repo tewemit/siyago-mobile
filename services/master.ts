@@ -33,3 +33,17 @@ export async function getSiteContact(): Promise<SiteContact> {
   const { data } = await api.get<SiteContact>('/site-contact');
   return data ?? {};
 }
+
+export type LegalDocument = {
+  id: number;
+  type: string;
+  title: string;
+  version: string;
+  content: string;
+};
+
+/** Latest published legal document of each type (terms, privacy, host agreement, etc) — public, used for consent gating during host registration. */
+export async function getLegalDocuments(): Promise<LegalDocument[]> {
+  const { data } = await api.get<LegalDocument[]>('/master/legal-documents');
+  return data ?? [];
+}

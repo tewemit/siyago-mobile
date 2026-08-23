@@ -1,8 +1,9 @@
 import { useI18n } from '../context/I18nContext';
 import { useAuth } from '../context/AuthContext';
-import { RADIUS, SHADOW, type ThemeColors } from '../constants/theme';
+import { RADIUS, type ThemeColors } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { updateMe } from '../services/auth';
+import GradientButton from '../components/GradientButton';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -67,14 +68,7 @@ export default function EditProfileScreen() {
           <Field label={t.last_name} value={lastName} onChangeText={setLastName} autoCapitalize="words" />
           <Field label={t.phone_number} value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" placeholder="+251912345678" />
 
-          <TouchableOpacity
-            style={[styles.btn, submitting && styles.btnDisabled]}
-            onPress={handleSave}
-            disabled={submitting}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.btnText}>{submitting ? t.saving : t.save_changes}</Text>
-          </TouchableOpacity>
+          <GradientButton label={t.save_changes} onPress={handleSave} loading={submitting} style={{ marginTop: 12 }} />
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -150,16 +144,5 @@ function createStyles(colors: ThemeColors) {
     color: colors.textPrimary,
   },
 
-  btn: {
-    backgroundColor: colors.primary,
-    height: 54,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-    ...SHADOW.sm,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   });
 }
