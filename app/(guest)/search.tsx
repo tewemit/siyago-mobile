@@ -49,11 +49,14 @@ export default function SearchScreen() {
   const [showFilters, setShowFilters] = useState(() => !!(params.showFilters || params.checkInDate));
 
   const [checkIn, setCheckIn] = useState<Date | null>(() =>
-    params.checkInDate ? parseISODate(params.checkInDate) : null
+    params.checkInDate ? parseISODate(params.checkInDate) : new Date()
   );
-  const [checkOut, setCheckOut] = useState<Date | null>(() =>
-    params.checkOutDate ? parseISODate(params.checkOutDate) : null
-  );
+  const [checkOut, setCheckOut] = useState<Date | null>(() => {
+    if (params.checkOutDate) return parseISODate(params.checkOutDate);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
   const [rooms, setRooms] = useState<RoomRequest[]>(() => [
     { adults: Math.max(1, Number(params.adults) || 1), children: Math.max(0, Number(params.children) || 0) },
   ]);

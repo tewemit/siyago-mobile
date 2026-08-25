@@ -60,8 +60,12 @@ export default function HomeScreen() {
   const [types, setTypes] = useState<MasterOption[]>([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [checkIn, setCheckIn] = useState<Date | null>(null);
-  const [checkOut, setCheckOut] = useState<Date | null>(null);
+  const [checkIn, setCheckIn] = useState<Date | null>(() => new Date());
+  const [checkOut, setCheckOut] = useState<Date | null>(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [showGuestsPicker, setShowGuestsPicker] = useState(false);
