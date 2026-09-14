@@ -113,6 +113,9 @@ export async function getAvailableRoomTypes(
     checkOutDate: params.checkOutDate,
     adults: params.adults ?? 1,
     children: params.children ?? 0,
+    // Show sold-out room types too (maxBookableRooms: 0) instead of hiding
+    // them, so the screen can render its existing "sold out" state.
+    includeFullyBooked: true,
   });
   return (data ?? []).map((r: any) => ({
     id: String(r.id),

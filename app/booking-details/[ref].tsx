@@ -117,6 +117,7 @@ export default function BookingDetailsScreen() {
       EXPIRED: t.status_EXPIRED,
       CHECKED_IN: t.status_CHECKED_IN,
       CHECKED_OUT: t.status_CHECKED_OUT,
+      NO_SHOW: t.status_NO_SHOW,
     };
     return map[s] ?? s;
   }

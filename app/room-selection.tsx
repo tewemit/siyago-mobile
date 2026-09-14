@@ -264,7 +264,7 @@ export default function RoomSelectionScreen() {
             const soldOut = rt.maxBookableRooms <= 0;
 
             return (
-              <View key={rt.id} style={styles.roomCard}>
+              <View key={rt.id} style={[styles.roomCard, soldOut && styles.roomCardSoldOut]}>
                 {rt.imageUrl ? (
                   <Image source={{ uri: rt.imageUrl }} style={styles.roomImage} />
                 ) : (
@@ -295,6 +295,12 @@ export default function RoomSelectionScreen() {
                         </View>
                       )}
                     </View>
+                  )}
+
+                  {!soldOut && (
+                    <Text style={styles.roomsLeftText}>
+                      {rt.maxBookableRooms} {t.rooms_remaining}
+                    </Text>
                   )}
 
                   <View style={styles.roomPriceRow}>
@@ -439,6 +445,7 @@ function createStyles(colors: ThemeColors) {
       marginBottom: 16,
       ...SHADOW.sm,
     },
+    roomCardSoldOut: { opacity: 0.6 },
     roomImage: { width: '100%', height: 160 },
     roomImagePlaceholder: { backgroundColor: colors.backgroundAlt, justifyContent: 'center', alignItems: 'center' },
     roomCardBody: { padding: 14 },
@@ -448,6 +455,7 @@ function createStyles(colors: ThemeColors) {
     roomDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 6, lineHeight: 17 },
     roomCapacity: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     roomRate: { fontSize: 13, fontWeight: '700', color: colors.primary },
+    roomsLeftText: { fontSize: 11, fontWeight: '600', color: colors.success, marginTop: 6 },
 
     amenityChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
     amenityChip: {

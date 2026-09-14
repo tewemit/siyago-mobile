@@ -145,6 +145,7 @@ export type T = {
   status_EXPIRED: string;
   status_CHECKED_IN: string;
   status_CHECKED_OUT: string;
+  status_NO_SHOW: string;
   complete_payment: string;
   no_properties: string;
   reviews: string;
@@ -397,6 +398,7 @@ const en: T = {
   status_EXPIRED: 'Expired',
   status_CHECKED_IN: 'Checked in',
   status_CHECKED_OUT: 'Checked out',
+  status_NO_SHOW: 'No show',
   complete_payment: 'Complete payment',
   no_properties: 'No properties found.',
   reviews: 'reviews',
@@ -648,6 +650,7 @@ const ar: T = {
   status_EXPIRED: 'منتهي الصلاحية',
   status_CHECKED_IN: 'تم تسجيل الوصول',
   status_CHECKED_OUT: 'تم تسجيل المغادرة',
+  status_NO_SHOW: 'لم يحضر',
   complete_payment: 'إتمام الدفع',
   no_properties: 'لا توجد عقارات.',
   reviews: 'تقييمات',
@@ -899,6 +902,7 @@ const am: T = {
   status_EXPIRED: 'ጊዜው አልፏል',
   status_CHECKED_IN: 'ገብቷል',
   status_CHECKED_OUT: 'ወጥቷል',
+  status_NO_SHOW: 'አልመጣም',
   complete_payment: 'ክፍያ ያጠናቅቁ',
   no_properties: 'ምንም ንብረቶች አልተገኙም።',
   reviews: 'ግምገማዎች',
@@ -1150,6 +1154,7 @@ const so: T = {
   status_EXPIRED: 'Waa dhacay',
   status_CHECKED_IN: 'Waa soo galay',
   status_CHECKED_OUT: 'Waa baxay',
+  status_NO_SHOW: 'Ma iman',
   complete_payment: 'Dhammaystir lacag bixinta',
   no_properties: 'Hanti lama helin.',
   reviews: 'Diiwaanada',
@@ -1401,6 +1406,7 @@ const ti: T = {
   status_EXPIRED: 'ግዜኡ ሓሊፉ',
   status_CHECKED_IN: 'ኣትዩ',
   status_CHECKED_OUT: 'ወጺኡ',
+  status_NO_SHOW: 'ኣይመጸን',
   complete_payment: 'ክፍሊት ኣጠናቕቕ',
   no_properties: 'ምንም ንብረት ኣይተረኽበን።',
   reviews: 'ግምገማታት',
@@ -1652,6 +1658,7 @@ const zh: T = {
   status_EXPIRED: '已过期',
   status_CHECKED_IN: '已入住',
   status_CHECKED_OUT: '已退房',
+  status_NO_SHOW: '未入住',
   complete_payment: '完成支付',
   no_properties: '未找到房源。',
   reviews: '条评价',

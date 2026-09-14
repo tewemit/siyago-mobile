@@ -12,7 +12,8 @@ export type BookingStatus =
   | 'CANCELLED'
   | 'EXPIRED'
   | 'CHECKED_IN'
-  | 'CHECKED_OUT';
+  | 'CHECKED_OUT'
+  | 'NO_SHOW';
 
 export type Booking = {
   id: string;

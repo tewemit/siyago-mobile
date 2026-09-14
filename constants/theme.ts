@@ -131,6 +131,7 @@ export const LIGHT_STATUS_COLOR: Record<string, string> = {
   EXPIRED: '#EF4444',
   CHECKED_IN: '#1A56B0',
   CHECKED_OUT: '#64748B',
+  NO_SHOW: '#475569',
   // Legacy alias — kept in case older UI copy still references it.
   COMPLETED: '#64748B',
 };
@@ -144,6 +145,7 @@ export const NAVY_STATUS_COLOR: Record<string, string> = {
   // near-invisible as blue-on-navy against the Navy theme's page background.
   CHECKED_IN: '#3B82D6',
   CHECKED_OUT: '#94A3B8',
+  NO_SHOW: '#CBD5E1',
   COMPLETED: '#94A3B8',
 };
 
