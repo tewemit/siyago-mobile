@@ -256,7 +256,12 @@ export default function BookingSummaryScreen() {
     }
     setSelectedRooms((prev) => {
       if (prev.length === 0) {
-        const first = availableRoomTypes[0];
+        // getAvailableRoomTypes now always requests includeFullyBooked, so
+        // a sold-out room type can legitimately be present here — never
+        // auto-seed from a plain [0] index, which could silently pick one
+        // with maxBookableRooms === 0.
+        const first = availableRoomTypes.find((t) => t.maxBookableRooms > 0);
+        if (!first) return [];
         return [{
           key: `${first.id}-default`,
           roomTypeId: first.id,

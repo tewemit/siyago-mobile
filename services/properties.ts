@@ -118,7 +118,14 @@ export function normalizeProperty(raw: any): Property {
     name: raw.name,
     description: raw.description ?? undefined,
     city: raw.city?.name ?? '',
-    country: raw.country ?? '',
+    // The backend's multi-country support changed Property.country from a
+    // plain string to a { name, isoCode2 } relation on the property-detail
+    // endpoint (getPublicProperty) — rendering that object directly as a
+    // JSX child crashes React Native ("Objects are not valid as a React
+    // child"). Other endpoints (search, premium, host list) never send a
+    // country at all, so `raw.country` may still legitimately be undefined
+    // or (defensively) an old-shape string.
+    country: raw.country?.name ?? (typeof raw.country === 'string' ? raw.country : ''),
     address: raw.street ?? raw.address ?? '',
     thumbnail: getImageUrl(raw.mainImage),
     // ETB-denominated — display it via useCurrency()'s format()/convert(),
