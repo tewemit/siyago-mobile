@@ -90,7 +90,6 @@ export default function RoomSelectionScreen() {
   const [roomTypes, setRoomTypes] = useState<AvailableRoomType[]>([]);
   const [priceLinesByRoom, setPriceLinesByRoom] = useState<Record<string, RoomPriceLine[]>>({});
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
   const [selections, setSelections] = useState<Record<string, RowSelection>>({});
 
   useEffect(() => {
@@ -196,20 +195,25 @@ export default function RoomSelectionScreen() {
     [selections, nights]
   );
 
-  function handleContinue() {
-    if (!checkIn || !checkOut || totalRoomsSelected === 0) return;
-    const bookingRooms = Object.values(selections).map((s) => ({
-      id: s.roomTypeId,
-      name: s.name,
-      price: s.price,
-      maxAdults: s.adults,
-      maxChildren: s.children,
-      count: s.quantity,
-      pricingLineId: s.pricingLineId,
-      breakfastIncluded: s.breakfastIncluded,
-      shuttleIncluded: s.shuttleIncluded,
-      amenityNames: s.amenityNames,
-    }));
+  function buildBookingRooms(onlyRoomTypeId?: string) {
+    return Object.values(selections)
+      .filter((s) => onlyRoomTypeId == null || s.roomTypeId === onlyRoomTypeId)
+      .map((s) => ({
+        id: s.roomTypeId,
+        name: s.name,
+        price: s.price,
+        maxAdults: s.adults,
+        maxChildren: s.children,
+        count: s.quantity,
+        pricingLineId: s.pricingLineId,
+        breakfastIncluded: s.breakfastIncluded,
+        shuttleIncluded: s.shuttleIncluded,
+        amenityNames: s.amenityNames,
+      }));
+  }
+
+  function goToBookingSummary(bookingRooms: ReturnType<typeof buildBookingRooms>) {
+    if (!checkIn || !checkOut || bookingRooms.length === 0) return;
     router.push({
       pathname: '/booking-summary',
       params: {
@@ -219,6 +223,16 @@ export default function RoomSelectionScreen() {
         bookingRooms: JSON.stringify(bookingRooms),
       },
     });
+  }
+
+  function handleContinue() {
+    goToBookingSummary(buildBookingRooms());
+  }
+
+  // Reserving straight from one room type's card skips the page-wide "Continue"
+  // bar entirely — only that card's selected rows go to booking-summary.
+  function handleReserveRoom(roomType: AvailableRoomType) {
+    goToBookingSummary(buildBookingRooms(roomType.id));
   }
 
   return (
@@ -255,7 +269,6 @@ export default function RoomSelectionScreen() {
           <Text style={styles.emptyText}>{t.no_rooms_for_property}</Text>
         ) : (
           roomTypes.map((rt) => {
-            const expanded = expandedRoomId === rt.id;
             const cheapestPrice = Math.min(
               rt.ratePerNight,
               ...(priceLinesByRoom[rt.id] ?? []).map((l) => convertToEtb(l.price, l.currency))
@@ -309,70 +322,62 @@ export default function RoomSelectionScreen() {
                       <Text style={styles.fromPrice}>{format(cheapestPrice)}</Text>
                       <Text style={styles.perNightLabel}>{t.per_night}</Text>
                     </View>
-                    {soldOut ? (
-                      <Text style={styles.soldOutText}>{t.sold_out}</Text>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.seeOptionsBtn}
-                        onPress={() => setExpandedRoomId(expanded ? null : rt.id)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.seeOptionsBtnText}>
-                          {selectedCount > 0
-                            ? `${selectedCount} ${t.rooms}`
-                            : `${t.see_options} (${rowsFor(rt).length})`}
-                        </Text>
-                        <Ionicons
-                          name={expanded ? 'chevron-up' : 'chevron-down'}
-                          size={14}
-                          color={colors.primary}
-                        />
-                      </TouchableOpacity>
-                    )}
+                    {soldOut && <Text style={styles.soldOutText}>{t.sold_out}</Text>}
                   </View>
 
-                  {expanded && (
-                    <View style={styles.priceLineList}>
-                      {rowsFor(rt).map(({ rowKey, line }) => {
-                        const key = `${rt.id}-${rowKey}`;
-                        const qty = selections[key]?.quantity ?? 0;
-                        const included = line
-                          ? [
-                              line.breakfastIncluded && t.breakfast_included,
-                              line.shuttleIncluded && t.shuttle_included,
-                              ...line.amenityNames,
-                            ].filter((v): v is string => !!v)
-                          : [];
-                        return (
-                          <View key={rowKey} style={styles.priceLineRow}>
-                            <View style={styles.priceLineRowTop}>
-                              <View style={{ flex: 1 }}>
-                                {!line && <Text style={styles.roomName}>{t.room_only}</Text>}
-                                <Text style={styles.roomCapacity}>
-                                  {line ? line.numberOfAdults : rt.maxAdults} {t.adults}
-                                  {(line ? line.numberOfChildren : rt.maxChildren) > 0
-                                    ? `, ${line ? line.numberOfChildren : rt.maxChildren} ${t.children}`
-                                    : ''}
+                  {!soldOut && (
+                    <>
+                      <View style={styles.priceLineList}>
+                        {rowsFor(rt).map(({ rowKey, line }) => {
+                          const key = `${rt.id}-${rowKey}`;
+                          const qty = selections[key]?.quantity ?? 0;
+                          const included = line
+                            ? [
+                                line.breakfastIncluded && t.breakfast_included,
+                                line.shuttleIncluded && t.shuttle_included,
+                                ...line.amenityNames,
+                              ].filter((v): v is string => !!v)
+                            : [];
+                          return (
+                            <View key={rowKey} style={styles.priceLineRow}>
+                              <View style={styles.priceLineRowTop}>
+                                <View style={{ flex: 1 }}>
+                                  {!line && <Text style={styles.roomName}>{t.room_only}</Text>}
+                                  <Text style={styles.roomCapacity}>
+                                    {line ? line.numberOfAdults : rt.maxAdults} {t.adults}
+                                    {(line ? line.numberOfChildren : rt.maxChildren) > 0
+                                      ? `, ${line ? line.numberOfChildren : rt.maxChildren} ${t.children}`
+                                      : ''}
+                                  </Text>
+                                  {included.map((label) => (
+                                    <Text key={label} style={styles.includedText}>✓ {label}</Text>
+                                  ))}
+                                </View>
+                                <Text style={styles.roomRate}>
+                                  {format(line ? convertToEtb(line.price, line.currency) : rt.ratePerNight)}
                                 </Text>
-                                {included.map((label) => (
-                                  <Text key={label} style={styles.includedText}>✓ {label}</Text>
-                                ))}
                               </View>
-                              <Text style={styles.roomRate}>
-                                {format(line ? convertToEtb(line.price, line.currency) : rt.ratePerNight)}
-                              </Text>
+                              <Stepper
+                                label={t.rooms}
+                                value={qty}
+                                onChange={(v) => setRowQuantity(rt, rowKey, line, v)}
+                                min={0}
+                                max={rt.maxBookableRooms}
+                              />
                             </View>
-                            <Stepper
-                              label={t.rooms}
-                              value={qty}
-                              onChange={(v) => setRowQuantity(rt, rowKey, line, v)}
-                              min={0}
-                              max={rt.maxBookableRooms}
-                            />
-                          </View>
-                        );
-                      })}
-                    </View>
+                          );
+                        })}
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.reserveBtn, selectedCount === 0 && styles.reserveBtnDisabled]}
+                        onPress={() => handleReserveRoom(rt)}
+                        disabled={selectedCount === 0}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.reserveBtnText}>{t.book_now}</Text>
+                      </TouchableOpacity>
+                    </>
                   )}
                 </View>
               </View>
@@ -480,16 +485,15 @@ function createStyles(colors: ThemeColors) {
     perNightLabel: { fontSize: 10, color: colors.textSecondary },
     soldOutText: { fontSize: 12, fontWeight: '700', color: colors.error },
 
-    seeOptionsBtn: {
-      flexDirection: 'row',
+    reserveBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: RADIUS.md,
+      paddingVertical: 12,
       alignItems: 'center',
-      gap: 4,
-      backgroundColor: colors.primaryLight,
-      borderRadius: RADIUS.full,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
+      marginTop: 12,
     },
-    seeOptionsBtnText: { fontSize: 12, fontWeight: '700', color: colors.primary },
+    reserveBtnDisabled: { backgroundColor: colors.border },
+    reserveBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
     priceLineList: { marginTop: 12, gap: 10 },
     priceLineRow: {

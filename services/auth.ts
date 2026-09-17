@@ -109,10 +109,15 @@ function appendKycFiles(form: FormData, kyc?: HostKycFiles) {
  * before the host can sign in and manage properties. Sent as multipart/
  * form-data since KYC documents (optional) are real file uploads.
  *
- * The API's validation schema for this endpoint is `.strict()` and only
- * recognizes the fields typed below — anything else (property type, room
- * count, etc.) gets the whole request rejected, so those never get sent
- * here even though the mobile wizard collects them for the review screen.
+ * The API now also accepts optional property-detail fields on this endpoint
+ * (propertyTypeId/customPropertyTypeName, propertyCountryId, propertyRegionId,
+ * propertyCityId/customCityName, propertyStreet, numberOfRooms) that create a
+ * real, minimal Property alongside the account when enough of them are
+ * present — mirroring what the web registration wizard now sends. This
+ * mobile wizard does not send them yet: property type, room count, and
+ * address are still collected only for the review screen, so a mobile
+ * signup still ends up with just a `hotelName` string on the User, no
+ * Property row, exactly like before.
  */
 export async function registerHost(payload: {
   firstName: string;
