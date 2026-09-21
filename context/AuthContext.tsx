@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
+import { AppState, type AppStateStatus } from 'react-native';
 import React, {
   createContext,
   useCallback,
@@ -62,6 +63,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     return () => setUnauthorizedHandler(null);
   }, [router]);
+
+  // The server now enforces a per-role idle timeout, and backgrounding the
+  // app for a while is completely normal mobile usage (unlike a web tab
+  // left open) — re-validate on resume so a session that died while
+  // backgrounded is caught right away with a clean redirect, rather than
+  // surfacing as a confusing error on whatever screen happens to fire the
+  // next API call.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') refresh();
+    });
+    return () => subscription.remove();
+  }, [refresh]);
 
   return (
     <AuthContext.Provider
